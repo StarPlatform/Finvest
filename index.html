@@ -1,0 +1,1216 @@
+<title>Finvest</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..700&family=Figtree:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout concept: chart-first workspace. Beranda opens with a live simulated chart beside two entry paths
+   (pemula / berpengalaman). Pasar is a customizable multi-chart grid with a watchlist rail.
+   Every price carries its data-status badge (Aktual / Tertunda / Simulasi). */
+:root{
+  --font-display:"Bricolage Grotesque","Avenir Next","Segoe UI",system-ui,sans-serif;
+  --font-body:"Figtree","Segoe UI",system-ui,-apple-system,sans-serif;
+  --font-data:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --bg:#F2F4F8; --surface:#FFFFFF; --surface-2:#E9EDF5; --line:#D8DEEA;
+  --ink:#0F1A2E; --ink-2:#44516B; --ink-3:#66718B;
+  --accent:#2F4BCB; --accent-ink:#FFFFFF; --accent-soft:#E2E8FC;
+  --up:#0B7A55; --up-soft:#DCF2E9; --down:#C23B2B; --down-soft:#FBE3DF;
+  --warn:#8A5200; --warn-soft:#FBEBCD;
+  --s1:#2F4BCB; --s2:#C9701A; --s3:#0E8F7A; --s4:#A83F95;
+  --shadow:0 1px 2px rgba(15,26,46,.06),0 8px 24px rgba(15,26,46,.06);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0A1120; --surface:#111B30; --surface-2:#18243F; --line:#25345A;
+    --ink:#E8EDF8; --ink-2:#A9B4CC; --ink-3:#8A96B2;
+    --accent:#8FA3FF; --accent-ink:#0A1120; --accent-soft:#1B2852;
+    --up:#3FD6A2; --up-soft:#10332A; --down:#FF7F6D; --down-soft:#3A1C19;
+    --warn:#F2B654; --warn-soft:#33260F;
+    --s1:#8FA3FF; --s2:#F0A25C; --s3:#4FD1B5; --s4:#E58BD3;
+    --shadow:0 0 0 1px rgba(255,255,255,.03);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0A1120; --surface:#111B30; --surface-2:#18243F; --line:#25345A;
+  --ink:#E8EDF8; --ink-2:#A9B4CC; --ink-3:#8A96B2;
+  --accent:#8FA3FF; --accent-ink:#0A1120; --accent-soft:#1B2852;
+  --up:#3FD6A2; --up-soft:#10332A; --down:#FF7F6D; --down-soft:#3A1C19;
+  --warn:#F2B654; --warn-soft:#33260F;
+  --s1:#8FA3FF; --s2:#F0A25C; --s3:#4FD1B5; --s4:#E58BD3;
+  --shadow:0 0 0 1px rgba(255,255,255,.03);
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:auto}
+body{
+  margin:0;background:var(--bg);color:var(--ink);
+  font:400 15px/1.55 var(--font-body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:0;
+}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--bg)}
+body.noscroll{overflow:hidden}
+h1,h2,h3{font-family:var(--font-display);letter-spacing:-.015em;text-wrap:balance;margin:0}
+p{margin:0}
+a{color:var(--accent)}
+button,select,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+.num{font-family:var(--font-data);font-variant-numeric:tabular-nums}
+.wrap{max-width:1280px;margin:0 auto}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* header */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:31;background:var(--bg);border-bottom:1px solid var(--line)}
+.top-row{display:flex;align-items:center;gap:20px;height:58px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink);font:700 19px var(--font-display);letter-spacing:-.02em}
+.brand svg{width:26px;height:26px;color:var(--accent)}
+.nav{display:flex;gap:2px;margin-left:12px}
+.nav a{padding:8px 14px;border-radius:10px;text-decoration:none;color:var(--ink-2);font-weight:500}
+.nav a:hover{background:var(--surface-2);color:var(--ink)}
+.nav a[aria-current="page"]{background:var(--accent-soft);color:var(--accent)}
+.top-right{margin-left:auto;display:flex;gap:8px;align-items:center}
+.iconbtn{width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;cursor:pointer;color:var(--ink-2)}
+.iconbtn:hover{color:var(--ink);background:var(--surface-2)}
+.iconbtn svg{width:18px;height:18px}
+.simbar{display:flex;gap:10px;align-items:center;padding:6px 0 8px;font-size:12.5px;color:var(--ink-2);flex-wrap:wrap}
+.simbar b{color:var(--warn);font-weight:600}
+.simbar a{color:var(--ink-2)}
+.simbar .long{display:inline}
+
+/* badges, pills */
+.badge{display:inline-block;font:500 10.5px/1 var(--font-data);letter-spacing:.06em;padding:4px 6px;border-radius:6px;white-space:nowrap}
+.badge.sim{background:var(--warn-soft);color:var(--warn)}
+.badge.live{background:var(--up-soft);color:var(--up)}
+.badge.delayed{background:var(--accent-soft);color:var(--accent)}
+.pill{display:inline-block;font:500 12.5px/1 var(--font-data);padding:5px 8px;border-radius:999px;background:var(--surface-2);color:var(--ink-2);white-space:nowrap;font-variant-numeric:tabular-nums}
+.pill.up{background:var(--up-soft);color:var(--up)}
+.pill.down{background:var(--down-soft);color:var(--down)}
+.pill.big{font-size:14px;padding:7px 11px}
+
+/* buttons, segmented */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:9px 16px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-weight:500;text-decoration:none;cursor:pointer}
+.btn:hover{background:var(--surface-2)}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn-primary:hover{background:var(--accent);filter:brightness(1.08)}
+.btn-sm{min-height:34px;padding:6px 12px;font-size:13.5px}
+.btn-ghost{border-color:transparent;background:transparent;color:var(--ink-2)}
+.seg{display:inline-flex;background:var(--surface-2);border-radius:10px;padding:3px;gap:2px;max-width:100%;overflow-x:auto}
+.seg button{border:0;background:transparent;color:var(--ink-2);padding:6px 11px;border-radius:8px;font:500 13px var(--font-body);cursor:pointer;min-height:32px;white-space:nowrap}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
+.field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.field label,.lab{font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-3)}
+.input,select.input{width:100%;min-height:40px;padding:8px 12px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+input[type=range]{width:100%;accent-color:var(--accent)}
+
+main{padding-block:28px 96px}
+.page-head{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:end;justify-content:space-between;margin-bottom:20px}
+.page-head h1{font-size:clamp(1.6rem,3vw,2.1rem)}
+.page-head p{color:var(--ink-2);max-width:60ch;margin-top:4px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;min-width:0}
+.eyebrow{font:500 12px var(--font-data);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+
+/* chart hosts */
+.chart{position:relative;width:100%;height:240px;min-width:0}
+.chart svg{display:block;overflow:visible}
+.chart .gl{stroke:var(--line);stroke-width:1}
+.chart .bl{stroke:var(--ink-3);stroke-width:1;stroke-dasharray:2 4}
+.chart .al{fill:var(--ink-3);font:400 10.5px var(--font-data)}
+.chart .el{font:500 11px var(--font-data)}
+.chart .ch{stroke:var(--ink-3);stroke-width:1}
+.chart .hd{stroke:var(--surface);stroke-width:2}
+.chart .ov{touch-action:pan-y;cursor:crosshair}
+.chart .tip{position:absolute;pointer-events:none;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 10px;box-shadow:var(--shadow);font-size:12px;display:flex;flex-direction:column;gap:2px;white-space:nowrap;z-index:2}
+.chart .tip b{font:500 13px var(--font-data)}
+.chart .tip span{color:var(--ink-3)}
+.chart .tip em{font:500 9.5px var(--font-data);letter-spacing:.08em;color:var(--warn);font-style:normal}
+.spark{display:block;width:76px;height:28px}
+
+/* hero */
+.hero{display:grid;gap:32px;grid-template-columns:minmax(0,1fr);padding-block:16px 8px}
+@media(min-width:960px){.hero{grid-template-columns:minmax(0,5fr) minmax(0,6fr);align-items:center;gap:48px;padding-block:28px 16px}}
+.hero h1{font-size:clamp(2.1rem,4.8vw,3.5rem);line-height:1.04;margin:12px 0 16px;letter-spacing:-.03em}
+.lead{font-size:17px;color:var(--ink-2);max-width:52ch}
+.cta{display:flex;gap:10px;flex-wrap:wrap;margin-top:24px}
+.hero-chart{padding:16px 16px 10px;box-shadow:var(--shadow)}
+.hero-chart header{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap}
+.hero-chart .nm{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.hero-chart .nm b{font:700 18px var(--font-display)}
+.hero-chart .nm .num{font-size:18px}
+.hero-chart figcaption{color:var(--ink-3);font-size:12.5px;margin-top:6px}
+.section{margin-top:44px}
+.section>h2{font-size:1.35rem;margin-bottom:14px}
+.paths{display:grid;gap:16px;grid-template-columns:minmax(0,1fr)}
+@media(min-width:760px){.paths{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.path{padding:22px;display:flex;flex-direction:column;gap:14px}
+.path h3{font-size:1.25rem}
+.path ol{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px;counter-reset:s}
+.path li{display:flex;gap:12px;color:var(--ink-2);counter-increment:s}
+.path li::before{content:counter(s);flex:none;width:24px;height:24px;border-radius:50%;background:var(--accent-soft);color:var(--accent);font:500 12px/24px var(--font-data);text-align:center}
+.path .btn{align-self:flex-start;margin-top:auto}
+.principles{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.principles div{padding:16px 18px}
+.principles b{display:block;font:600 15px var(--font-display);margin-bottom:4px}
+.principles span{color:var(--ink-2);font-size:14px}
+.legend{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.legend div{padding:16px 18px;display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+.legend span.t{color:var(--ink-2);font-size:14px}
+.strip{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}
+.tile{padding:14px 16px;display:grid;grid-template-columns:1fr auto;gap:2px 12px;align-items:center;text-align:left;cursor:pointer;width:100%}
+.tile:hover{border-color:var(--ink-3)}
+.tile b{font:600 15px var(--font-display)}
+.tile .sub{color:var(--ink-3);font-size:12.5px}
+.tile .num{font-size:15px}
+.tile .spark{grid-row:1/3;grid-column:2}
+.tile .r{display:flex;gap:8px;align-items:center;margin-top:6px;grid-column:1}
+
+/* market */
+.mbar{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;margin-bottom:14px}
+.mbar .grow{flex:1}
+.stamp{font-size:12.5px;color:var(--ink-3);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:16px;overflow-x:auto}
+.tabs a{padding:10px 14px;text-decoration:none;color:var(--ink-2);font-weight:500;border-bottom:2px solid transparent;white-space:nowrap;margin-bottom:-1px}
+.tabs a[aria-current="page"]{color:var(--accent);border-color:var(--accent)}
+.tabs .cnt{display:inline-block;min-width:18px;padding:1px 5px;margin-left:6px;border-radius:9px;background:var(--surface-2);font:500 11px/16px var(--font-data);text-align:center}
+.mkt{display:grid;gap:20px;grid-template-columns:minmax(0,1fr)}
+@media(min-width:1100px){.mkt{grid-template-columns:minmax(0,1fr) 320px;align-items:start}}
+.panels{display:grid;gap:16px;grid-template-columns:minmax(0,1fr)}
+@media(min-width:900px){.panels[data-layout="2"],.panels[data-layout="4"]{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.panel{padding:14px 14px 8px}
+.panel-h{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:6px}
+.panel-h select{max-width:170px;min-height:34px;padding:4px 8px;font-weight:600}
+.panel-h .px{font-size:16px}
+.panel-h .sp{flex:1}
+.panels[data-layout="1"] .chart{height:380px}
+.aside{padding:14px;position:sticky;top:140px}
+@media(max-width:1099px){.aside{position:static}}
+.aside h2{font-size:1.05rem;margin-bottom:2px}
+.aside .hint{color:var(--ink-3);font-size:12.5px;margin-bottom:10px}
+.wl{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column}
+.wl li{display:flex;align-items:center;gap:4px;border-top:1px solid var(--line)}
+.wl .open{flex:1;min-width:0;display:grid;grid-template-columns:1fr auto auto;gap:2px 10px;align-items:center;padding:10px 4px;background:transparent;border:0;text-align:left;cursor:pointer;border-radius:8px}
+.wl .open:hover{background:var(--surface-2)}
+.wl .nm{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wl .sub{grid-column:1;color:var(--ink-3);font-size:12px}
+.wl .num{font-size:13px;text-align:right}
+.wl .spark{grid-row:1/3;grid-column:2;width:60px}
+.wl .open .pill{grid-column:3;grid-row:1/3}
+.wl .star{width:34px;height:34px;border:0;background:transparent;color:var(--accent);cursor:pointer;border-radius:8px;font-size:17px}
+.wl .star:hover{background:var(--surface-2)}
+.wl-add{margin-top:10px;display:flex;gap:8px}
+.cmpchips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.chip{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);cursor:pointer;font-size:13.5px;font-weight:500;min-height:34px}
+.chip[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.chip i{width:10px;height:10px;border-radius:50%;display:inline-block}
+.tblwrap{overflow-x:auto;margin-top:16px}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-3);font-weight:600;white-space:nowrap}
+td.r,th.r{text-align:right}
+.alertform{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));align-items:end;padding:16px}
+.alist{list-style:none;margin:16px 0 0;padding:0;display:flex;flex-direction:column;gap:8px}
+.alist li{display:flex;gap:12px;align-items:center;padding:12px 14px;flex-wrap:wrap}
+.alist .grow{flex:1;min-width:180px}
+.empty{padding:28px;text-align:center;color:var(--ink-2)}
+
+/* sheet */
+.sheet{position:fixed;inset:0;z-index:50;display:flex;justify-content:flex-end}
+.sheet-bg{position:absolute;inset:0;background:rgba(5,10,20,.5)}
+.sheet-panel{position:relative;width:min(560px,100%);height:100%;overflow-y:auto;background:var(--bg);border-left:1px solid var(--line);padding:18px max(18px,env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) 18px;padding-top:calc(18px + env(safe-area-inset-top,0px));display:flex;flex-direction:column;gap:16px}
+@media(max-width:640px){.sheet{align-items:flex-end}.sheet-panel{height:92%;border-left:0;border-top:1px solid var(--line);border-radius:18px 18px 0 0;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}}
+@media(prefers-reduced-motion:no-preference){.sheet-panel{animation:slide .22s ease-out}@keyframes slide{from{transform:translateX(24px);opacity:0}to{transform:none;opacity:1}}}
+.sh-h{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.sh-h h2{font-size:1.5rem}
+.sh-h .meta{display:flex;gap:8px;align-items:center;color:var(--ink-3);font-size:13px;margin-bottom:4px;flex-wrap:wrap}
+.sh-px{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.sh-px .num{font-size:28px;font-weight:500}
+.stats{display:grid;gap:1px;grid-template-columns:repeat(3,minmax(0,1fr));background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.stats div{background:var(--surface);padding:10px 12px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.stats span{font-size:11.5px;color:var(--ink-3)}
+.stats b{font:500 13.5px var(--font-data);overflow:hidden;text-overflow:ellipsis}
+@media(max-width:420px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.risk{display:flex;align-items:center;gap:10px;font-size:13.5px}
+.pips{display:flex;gap:3px}
+.pips i{width:16px;height:8px;border-radius:2px;background:var(--line)}
+.pips i.on{background:var(--ink-2)}
+.sheet .block{padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.sheet .block h3{font-size:1rem}
+.sheet .block p{color:var(--ink-2);font-size:14px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.check{display:flex;gap:8px;align-items:center;font-size:13.5px;color:var(--ink-2)}
+.fine{font-size:12.5px;color:var(--ink-3)}
+
+/* toast */
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(24px + env(safe-area-inset-bottom,0px));z-index:70;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;width:max-content;max-width:calc(100% - 32px)}
+.toast div{background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;box-shadow:var(--shadow)}
+.toast div.alert{background:var(--accent);color:var(--accent-ink)}
+
+/* learn */
+.learn{display:grid;gap:24px;grid-template-columns:minmax(0,1fr)}
+@media(min-width:900px){.learn{grid-template-columns:270px minmax(0,1fr);align-items:start}.lnav-wrap{position:sticky;top:140px}}
+.lnav-wrap h2{font-size:1rem;margin-bottom:8px}
+.prog{height:6px;border-radius:3px;background:var(--surface-2);overflow:hidden;margin:6px 0 12px}
+.prog i{display:block;height:100%;background:var(--accent)}
+.lnav{display:flex;flex-direction:column;gap:2px}
+.lnav a{display:grid;grid-template-columns:26px 1fr auto;gap:8px;align-items:center;padding:9px 10px;border-radius:10px;text-decoration:none;color:var(--ink-2);font-weight:500;font-size:14px}
+.lnav a:hover{background:var(--surface-2)}
+.lnav a[aria-current="page"]{background:var(--accent-soft);color:var(--accent)}
+.lnav .n{width:24px;height:24px;border-radius:50%;border:1px solid var(--line);display:grid;place-items:center;font:500 11.5px var(--font-data)}
+.lnav a.done .n{background:var(--up);border-color:var(--up);color:var(--surface)}
+.lnav .m{font:400 11.5px var(--font-data);color:var(--ink-3)}
+@media(max-width:899px){.lnav{flex-direction:row;overflow-x:auto;padding-bottom:4px}.lnav a{white-space:nowrap;grid-template-columns:24px auto;border:1px solid var(--line);background:var(--surface)}.lnav .m{display:none}}
+.lesson{padding:clamp(18px,3vw,34px)}
+.lesson h1{font-size:clamp(1.7rem,3.2vw,2.3rem);margin:6px 0 6px}
+.lesson .blurb{color:var(--ink-2);font-size:16.5px;margin-bottom:8px}
+.prose{max-width:68ch}
+.prose h3{font-size:1.2rem;margin:26px 0 8px}
+.prose p,.prose li{color:var(--ink-2);font-size:16px;line-height:1.65}
+.prose p+p{margin-top:10px}
+.prose ul{margin:8px 0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.prose b{color:var(--ink)}
+.prose em{font-style:normal;color:var(--ink);font-weight:600}
+.defs{display:grid;gap:10px;margin:10px 0}
+.defs>div{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--bg)}
+.defs dt{font:600 15px var(--font-display);color:var(--ink)}
+.defs dd{margin:2px 0 0;color:var(--ink-2);font-size:15px}
+.lesson .tblwrap{max-width:100%}
+.lesson table td:first-child{font-weight:600;color:var(--ink);white-space:nowrap}
+.lesson table td{font-size:14px;color:var(--ink-2)}
+.widget{margin:18px 0;padding:16px;border:1px solid var(--line);border-radius:14px;background:var(--bg);max-width:760px}
+.widget h4{margin:0 0 4px;font:600 15px var(--font-display)}
+.widget .ctl{display:flex;gap:12px;flex-wrap:wrap;align-items:end;margin:10px 0}
+.widget .ctl .field{flex:1;min-width:150px}
+.widget .out{font-size:14px;color:var(--ink-2);margin-top:8px}
+.widget .chart{height:230px}
+.points{margin-top:26px;padding:16px 18px;border-radius:12px;background:var(--accent-soft);max-width:68ch}
+.points h3{font-size:1rem;margin-bottom:6px;color:var(--accent)}
+.points ul{margin:0;padding-left:18px;color:var(--ink);display:flex;flex-direction:column;gap:4px}
+.quiz{margin-top:30px;max-width:68ch}
+.quiz h3{font-size:1.2rem;margin-bottom:10px}
+.quiz fieldset{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:0 0 12px;min-width:0}
+.quiz legend{font-weight:600;padding:0 6px}
+.quiz label{display:flex;gap:10px;align-items:flex-start;padding:6px 0;cursor:pointer;color:var(--ink-2)}
+.quiz input{margin-top:4px;accent-color:var(--accent)}
+.quiz .fb{margin-top:6px;font-size:14px;padding:8px 10px;border-radius:8px}
+.quiz .fb.ok{background:var(--up-soft);color:var(--up)}
+.quiz .fb.no{background:var(--down-soft);color:var(--down)}
+.lfoot{display:flex;gap:10px;flex-wrap:wrap;justify-content:space-between;align-items:center;margin-top:30px;padding-top:18px;border-top:1px solid var(--line)}
+
+/* simulator */
+.simgrid{display:grid;gap:20px;grid-template-columns:minmax(0,1fr)}
+@media(min-width:960px){.simgrid{grid-template-columns:340px minmax(0,1fr);align-items:start}}
+.params{padding:18px;display:flex;flex-direction:column;gap:16px}
+.params h2{font-size:1.1rem}
+.rangeval{display:flex;justify-content:space-between;align-items:baseline}
+.rangeval b{font:500 14px var(--font-data)}
+.results{padding:18px;display:flex;flex-direction:column;gap:16px}
+.kpis{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.kpis div{padding:12px 14px;border:1px solid var(--line);border-radius:12px;display:flex;flex-direction:column;gap:2px;background:var(--bg)}
+.kpis span{font-size:12px;color:var(--ink-3)}
+.kpis b{font:500 17px var(--font-data)}
+.kpis small{font-size:11.5px;color:var(--ink-3)}
+.results .chart{height:340px}
+.keyline{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--ink-2)}
+.keyline i{display:inline-block;width:18px;height:8px;border-radius:2px;vertical-align:middle;margin-right:6px}
+.note{padding:12px 14px;border-radius:12px;background:var(--warn-soft);color:var(--warn);font-size:13.5px}
+
+footer.site{margin-top:56px;padding-top:20px;border-top:1px solid var(--line);color:var(--ink-3);font-size:13px;display:flex;flex-direction:column;gap:6px}
+
+/* mobile tab bar */
+.tabbar{display:none}
+@media(max-width:760px){
+  .nav{display:none}
+  .simbar .long{display:none}
+  main{padding-bottom:120px}
+  .tabbar{display:grid;grid-template-columns:repeat(4,1fr);position:fixed;left:0;right:0;bottom:0;z-index:40;background:var(--surface);border-top:1px solid var(--line);padding:6px max(8px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px))}
+  .tabbar a{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px;text-decoration:none;color:var(--ink-3);font-size:11.5px;font-weight:500;border-radius:10px}
+  .tabbar a svg{width:21px;height:21px}
+  .tabbar a[aria-current="page"]{color:var(--accent)}
+  .toast{bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+  .chart{height:210px}
+  .panels[data-layout="1"] .chart{height:300px}
+}
+</style>
+
+<header class="top">
+  <div class="wrap">
+    <div class="top-row">
+      <a class="brand" href="#beranda" aria-label="Finvest, ke beranda">
+        <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M3 22c4-1 5-8 9-8s5 6 9 6 6-9 8-12"/><path d="M3 27h26" opacity=".45"/></svg>
+        Finvest
+      </a>
+      <nav class="nav" aria-label="Navigasi utama" id="nav">
+        <a href="#beranda" data-p="beranda">Beranda</a>
+        <a href="#pasar" data-p="pasar">Pasar</a>
+        <a href="#belajar" data-p="belajar">Belajar</a>
+        <a href="#simulasi" data-p="simulasi">Simulator</a>
+      </nav>
+      <div class="top-right">
+        <button class="iconbtn" data-act="theme" aria-label="Ganti mode terang atau gelap" title="Ganti mode terang/gelap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="simbar" role="note" id="simbar">
+      <span class="badge sim">SIMULASI</span>
+      <span><b>Semua harga di prototype ini dibuat generator acak.</b><span class="long"> Bukan harga pasar dan bukan dasar keputusan beli atau jual.</span> <a href="#beranda">Status data</a></span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <main id="view" tabindex="-1"></main>
+</div>
+
+<nav class="tabbar" aria-label="Navigasi utama (ponsel)" id="tabbar">
+  <a href="#beranda" data-p="beranda"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>Beranda</a>
+  <a href="#pasar" data-p="pasar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17l5-6 4 3 8-9"/><path d="M3 21h18"/></svg>Pasar</a>
+  <a href="#belajar" data-p="belajar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5"/></svg>Belajar</a>
+  <a href="#simulasi" data-p="simulasi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>Simulator</a>
+</nav>
+
+<div id="overlay"></div>
+<div class="toast" id="toast" aria-live="polite"></div>
+
+<script>
+(function(){
+'use strict';
+
+/* =====================================================================
+   Utilities
+   ===================================================================== */
+var $=function(s,r){return (r||document).querySelector(s);};
+var $$=function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s));};
+var esc=function(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});};
+var nf=function(v,d){d=d||0;return Number(v).toLocaleString('id-ID',{minimumFractionDigits:d,maximumFractionDigits:d});};
+var sgn=function(v){return v>0?'+':v<0?'−':'';};
+var pct=function(v,d){return sgn(v)+nf(Math.abs(v),d==null?2:d)+'%';};
+var clamp=function(v,a,b){return Math.min(b,Math.max(a,v));};
+var pad=function(n){return String(n).padStart(2,'0');};
+var MONTHS=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+var fmtTime=function(t){var d=new Date(t);return pad(d.getHours())+':'+pad(d.getMinutes());};
+var fmtClock=function(t){var d=new Date(t);return pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds());};
+var fmtDate=function(t){var d=new Date(t);return d.getDate()+' '+MONTHS[d.getMonth()];};
+var fmtDateTime=function(t){return fmtDate(t)+', '+fmtTime(t);};
+function rpShort(v){var a=Math.abs(v);if(a>=1e12)return 'Rp '+nf(v/1e12,2)+' T';if(a>=1e9)return 'Rp '+nf(v/1e9,2)+' M';if(a>=1e6)return 'Rp '+nf(v/1e6,1)+' jt';if(a>=1e3)return 'Rp '+nf(v/1e3,0)+' rb';return 'Rp '+nf(v,0);}
+function rng(seed){var a=seed>>>0;return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function gauss(r){var u=0,v=0;while(u===0)u=r();while(v===0)v=r();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+function hash(s){var h=2166136261;for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
+function sma(v,p){var out=new Array(v.length).fill(NaN),sum=0;for(var i=0;i<v.length;i++){sum+=v[i];if(i>=p)sum-=v[i-p];if(i>=p-1)out[i]=sum/p;}return out;}
+function niceTicks(min,max,n){var span=max-min||1;var s0=span/(n-1);var mag=Math.pow(10,Math.floor(Math.log10(s0)));var nm=s0/mag;var step=(nm<1.5?1:nm<3?2:nm<7?5:10)*mag;var start=Math.ceil(min/step)*step;var out=[];for(var v=start;v<=max+1e-9&&out.length<8;v+=step)out.push(v);return out;}
+
+/* =====================================================================
+   Store (state + localStorage; storage is a convenience, never required)
+   ===================================================================== */
+var Store={
+  key:'finvest.v1',
+  state:{theme:null,watch:['IHSG','BBCA','EMAS','BTC'],alerts:[],layout:2,panels:['IHSG','BBCA','EMAS','BTC'],tf:'1B',done:[],compare:['IHSG','EMAS','BTC'],sim:null},
+  load:function(){try{var raw=localStorage.getItem(this.key);if(raw){var o=JSON.parse(raw);for(var k in o){if(Object.prototype.hasOwnProperty.call(this.state,k))this.state[k]=o[k];}}}catch(e){}},
+  save:function(){try{localStorage.setItem(this.key,JSON.stringify(this.state));}catch(e){}}
+};
+
+/* =====================================================================
+   Market data layer
+   Provider contract: status ('live' | 'delayed' | 'sim'), source, window(id,w,s), price(id), tick().
+   Swap SimProvider for a real provider later; views only talk to Market.
+   ===================================================================== */
+var ASSETS=[
+ {id:'IHSG',name:'IHSG',full:'Indeks Harga Saham Gabungan',cls:'Indeks saham',unit:'pts',dec:2,base:7200,vol:.16,risk:3,mod:'instrumen',
+  desc:'Indeks yang mengukur pergerakan harga saham-saham di Bursa Efek Indonesia secara keseluruhan. Indeks tidak bisa dibeli langsung, tetapi sering dipakai sebagai tolok ukur pasar saham.',
+  risks:'Naik-turun mengikuti kondisi ekonomi dan sentimen pasar. Indeks bisa turun dalam waktu lama.'},
+ {id:'BBCA',name:'BBCA',full:'Bank Central Asia',cls:'Saham',unit:'IDR',dec:0,base:9500,vol:.22,risk:4,mod:'instrumen',
+  desc:'Saham mewakili kepemilikan sebagian kecil sebuah perusahaan. Pemegang saham bisa memperoleh hasil dari kenaikan harga dan dividen, jika perusahaan membagikannya.',
+  risks:'Harga bisa turun karena kinerja perusahaan, kondisi industri, atau pasar. Kerugian bisa besar.'},
+ {id:'BBRI',name:'BBRI',full:'Bank Rakyat Indonesia',cls:'Saham',unit:'IDR',dec:0,base:4200,vol:.26,risk:4,mod:'instrumen',
+  desc:'Saham mewakili kepemilikan sebagian kecil sebuah perusahaan. Satu saham dengan harga rendah bukan berarti lebih murah dari saham berharga tinggi; yang penting nilai perusahaannya.',
+  risks:'Risiko spesifik perusahaan dan sektor perbankan, ditambah risiko pasar secara umum.'},
+ {id:'TLKM',name:'TLKM',full:'Telkom Indonesia',cls:'Saham',unit:'IDR',dec:0,base:3100,vol:.24,risk:4,mod:'instrumen',
+  desc:'Saham perusahaan di sektor telekomunikasi. Sektor yang stabil pun tetap bisa mengalami penurunan harga.',
+  risks:'Persaingan industri, kebutuhan investasi besar, dan risiko pasar secara umum.'},
+ {id:'ASII',name:'ASII',full:'Astra International',cls:'Saham',unit:'IDR',dec:0,base:5000,vol:.28,risk:4,mod:'instrumen',
+  desc:'Saham perusahaan dengan banyak lini bisnis. Bisnis yang beragam tidak otomatis membuat harga sahamnya lebih stabil.',
+  risks:'Terpengaruh siklus ekonomi dan harga komoditas, ditambah risiko pasar.'},
+ {id:'EMAS',name:'Emas',full:'Emas dunia dalam Rp per gram (estimasi)',cls:'Logam mulia',unit:'IDR',dec:0,base:1900000,vol:.14,risk:3,mod:'instrumen',
+  desc:'Emas sering dipakai sebagai penyimpan nilai dalam jangka panjang. Emas tidak membayar bunga atau dividen, sehingga hasilnya hanya berasal dari perubahan harga.',
+  risks:'Harga bisa turun cukup lama. Ada selisih harga jual dan beli, dan biaya penyimpanan jika fisik.'},
+ {id:'BTC',name:'Bitcoin',full:'Aset kripto',cls:'Kripto',unit:'USD',dec:2,base:70000,vol:.6,risk:5,mod:'risiko',
+  desc:'Aset digital berbasis teknologi blockchain yang diperdagangkan hampir sepanjang waktu. Umumnya tidak ada arus kas, sehingga nilainya sangat bergantung pada permintaan.',
+  risks:'Fluktuasi harga sangat besar, risiko keamanan dan platform, serta perubahan aturan.'},
+ {id:'ETH',name:'Ethereum',full:'Aset kripto',cls:'Kripto',unit:'USD',dec:2,base:3500,vol:.75,risk:5,mod:'risiko',
+  desc:'Aset kripto yang juga menjadi platform aplikasi blockchain. Fluktuasinya umumnya lebih lebar dibanding aset tradisional.',
+  risks:'Fluktuasi harga sangat besar, risiko teknologi, keamanan, dan aturan.'},
+ {id:'USDIDR',name:'USD/IDR',full:'Kurs dolar AS terhadap rupiah',cls:'Valuta asing',unit:'IDR',dec:0,base:16000,vol:.06,risk:2,mod:'risiko',
+  desc:'Berapa rupiah yang dibutuhkan untuk satu dolar AS. Kurs penting bagi yang punya kebutuhan atau aset dalam dolar.',
+  risks:'Kurs dipengaruhi suku bunga, perdagangan, dan sentimen global. Bisa bergerak tajam saat ada gejolak.'},
+ {id:'SPX',name:'S&P 500',full:'Indeks 500 saham besar AS',cls:'Indeks saham',unit:'pts',dec:2,base:5500,vol:.16,risk:3,mod:'diversifikasi',
+  desc:'Indeks yang mengukur 500 perusahaan besar di Amerika Serikat. Banyak produk investasi mengacu pada indeks ini.',
+  risks:'Risiko pasar saham AS, ditambah risiko kurs jika Anda berinvestasi dari rupiah.'},
+];
+var BY={};ASSETS.forEach(function(a){BY[a.id]=a;});
+var RISK=['','Sangat rendah','Rendah','Sedang','Tinggi','Sangat tinggi'];
+var N=17520,STEP=30*60000;
+var TFS={
+ '1Mg':{w:336,s:1,name:'1 minggu',days:7,src:'i'},
+ '1B':{w:1440,s:4,name:'1 bulan',days:30,src:'d'},
+ '3B':{w:4320,s:12,name:'3 bulan',days:91,src:'d'},
+ '1T':{w:17520,s:48,name:'1 tahun',days:365,src:'d'}
+};
+var STATUS={sim:{label:'SIMULASI',cls:'sim',long:'Simulasi'},live:{label:'AKTUAL',cls:'live',long:'Aktual'},delayed:{label:'TERTUNDA',cls:'delayed',long:'Tertunda'}};
+
+var SimProvider={
+  id:'sim',status:'sim',
+  source:'Generator acak internal. Tidak terhubung ke bursa atau penyedia data.',
+  data:{},endTime:Date.now(),last:Date.now(),
+  init:function(){
+    var self=this;
+    ASSETS.forEach(function(a){
+      var r=rng(hash(a.id)^20261108);
+      var sig=a.vol*Math.sqrt(0.5/8760),mu=0.05*0.5/8760;
+      var path=new Float64Array(N),x=0;
+      for(var i=0;i<N;i++){x+=(mu-sig*sig/2)+sig*gauss(r);path[i]=x;}
+      var last=path[N-1],arr=new Float64Array(N);
+      for(var j=0;j<N;j++)arr[j]=a.base*Math.exp(path[j]-last);
+      self.data[a.id]=arr;
+    });
+  },
+  tick:function(){
+    var self=this;
+    ASSETS.forEach(function(a){var arr=self.data[a.id];var sig=a.vol*Math.sqrt(0.5/8760)*0.12;arr[N-1]*=Math.exp(sig*gauss(Math.random));});
+    this.last=Date.now();
+  },
+  price:function(id){return this.data[id][N-1];},
+  window:function(id,w,s){
+    var d=this.data[id],v=[],t=[],cnt=Math.floor(w/s);
+    for(var k=cnt-1;k>=0;k--){var idx=N-1-k*s;v.push(d[idx]);t.push(this.endTime-(N-1-idx)*STEP);}
+    return {v:v,t:t};
+  }
+};
+var Market={
+  real:{},generated:null,gen:'',source:'',
+  load:function(){
+    var self=this;
+    if(typeof fetch!=='function')return Promise.resolve(false);
+    return fetch('data/market.json?ts='+Date.now(),{cache:'no-store'})
+      .then(function(r){if(!r.ok)throw new Error('http '+r.status);return r.json();})
+      .then(function(j){return self.ingest(j);})
+      .catch(function(){return false;});
+  },
+  ingest:function(j){
+    if(!j||!j.assets)return false;
+    var real={},n=0;
+    ASSETS.forEach(function(a){
+      var x=j.assets[a.id];
+      if(x&&x.d&&x.d.t&&x.d.v&&x.d.t.length>1&&x.d.t.length===x.d.v.length){real[a.id]=x;n++;}
+    });
+    if(!n)return false;
+    this.real=real;this.gen=j.generated||'';this.generated=j.generated?Date.parse(j.generated):null;this.source=j.source||'';
+    return true;
+  },
+  has:function(id){return !!this.real[id];},
+  anyReal:function(){return Object.keys(this.real).length>0;},
+  status:function(id){return this.real[id]?'delayed':'sim';},
+  asOf:function(id){
+    var x=this.real[id];if(!x)return SimProvider.last;
+    var d=x.d.t[x.d.t.length-1],i=x.i&&x.i.t&&x.i.t.length?x.i.t[x.i.t.length-1]:0;
+    return Math.max(d,i);
+  },
+  lastUpdate:function(){return this.generated||SimProvider.last;},
+  price:function(id){
+    var x=this.real[id];if(!x)return SimProvider.price(id);
+    var di=x.d.t[x.d.t.length-1];
+    if(x.i&&x.i.t&&x.i.t.length&&x.i.t[x.i.t.length-1]>di)return x.i.v[x.i.v.length-1];
+    return x.d.v[x.d.v.length-1];
+  },
+  series:function(id,tf){
+    var c=TFS[tf],x=this.real[id];
+    if(!x){var w=SimProvider.window(id,c.w,c.s);w.intraday=c.src==='i';return w;}
+    var cut=this.asOf(id)-c.days*86400000,useI=c.src==='i'&&x.i&&x.i.t&&x.i.t.length>=2,src=useI?x.i:x.d,t=[],v=[],k;
+    for(k=0;k<src.t.length;k++){if(src.t[k]>=cut){t.push(src.t[k]);v.push(src.v[k]);}}
+    if(t.length<2){t=src.t.slice(-2);v=src.v.slice(-2);}
+    return {t:t,v:v,intraday:useI};
+  },
+  volSeries:function(id){
+    var x=this.real[id];
+    if(x)return x.d.v.slice(-366);
+    return SimProvider.window(id,17520,48).v;
+  },
+  note:function(id){
+    var a=BY[id],x=this.real[id];
+    if(!x)return 'Harga '+a.name+' di sini hasil generator acak dan tidak sama dengan harga sebenarnya.';
+    var s='Data tertunda dari '+(this.source||'penyedia data')+', titik data terakhir '+fmtDateTime(this.asOf(id))+'. Bisa berbeda dari harga di platform tempat Anda bertransaksi.';
+    if(id==='EMAS')s+=' Dihitung dari harga emas dunia dikali kurs USD/IDR per gram. Bukan harga Antam atau toko emas.';
+    return s;
+  },
+  stats:function(id,tf){
+    var v=this.series(id,tf).v,first=v[0],last=v[v.length-1],hi=-Infinity,lo=Infinity,peak=v[0],mdd=0;
+    for(var i=0;i<v.length;i++){var x=v[i];if(x>hi)hi=x;if(x<lo)lo=x;if(x>peak)peak=x;var dd=(x-peak)/peak;if(dd<mdd)mdd=dd;}
+    return {first:first,last:last,hi:hi,lo:lo,chg:(last/first-1)*100,mdd:mdd*100};
+  },
+  vol:function(id){
+    var s=this.volSeries(id),r=[],i;
+    for(i=1;i<s.length;i++)r.push(Math.log(s[i]/s[i-1]));
+    var m=r.reduce(function(a,b){return a+b;},0)/r.length;
+    var va=r.reduce(function(a,b){return a+(b-m)*(b-m);},0)/(r.length-1);
+    var ann=(this.real[id]&&id!=='BTC'&&id!=='ETH')?252:365;
+    return Math.sqrt(va)*Math.sqrt(ann)*100;
+  }
+};
+function fmtPrice(a,v){var p=a.unit==='IDR'?'Rp ':a.unit==='USD'?'US$ ':'';return p+nf(v,a.dec);}
+function badge(st,id){var s=STATUS[st||Market.status(id)];return '<span class="badge '+s.cls+'" title="Status data: '+s.long+'">'+s.label+'</span>';}
+function statusLong(id){return STATUS[Market.status(id)].long.toLowerCase();}
+function cmpTag(ids){return ids.every(Market.has,Market)?'TERTUNDA':ids.every(function(i){return !Market.has(i);})?'SIMULASI':'CAMPURAN';}
+function renderSimbar(){
+  var el=$('#simbar');if(!el)return;
+  if(Market.anyReal()){
+    var miss=ASSETS.filter(function(a){return !Market.has(a.id);}).length;
+    el.innerHTML='<span class="badge delayed">TERTUNDA</span><span><b>Harga adalah data tertunda, bukan real-time.</b><span class="long"> Terakhir diperbarui '+esc(fmtDateTime(Market.lastUpdate()))+(miss?'. '+miss+' aset masih simulasi.':'.')+' Bukan dasar keputusan beli atau jual.</span> <a href="#beranda">Status data</a></span>';
+  }else{
+    el.innerHTML='<span class="badge sim">SIMULASI</span><span><b>Semua harga di prototype ini dibuat generator acak.</b><span class="long"> Bukan harga pasar dan bukan dasar keputusan beli atau jual.</span> <a href="#beranda">Status data</a></span>';
+  }
+}
+function heroCaption(){
+  return Market.has('IHSG')?'Grafik 3 bulan dari data tertunda, titik terakhir '+fmtDateTime(Market.asOf('IHSG'))+'. Rincian sumber ada di bagian Status data.':'Contoh grafik 3 bulan. Angka dan pergerakannya dibuat generator acak dan tidak mencerminkan IHSG yang sebenarnya.';
+}
+function dataLine(){
+  return Market.anyReal()?'Data tertunda, terakhir diperbarui '+fmtDateTime(Market.lastUpdate())+'.':'Data simulasi, bukan harga pasar.';
+}
+function sourceNote(){
+  if(!Market.anyReal())return 'Data pasar belum termuat, jadi halaman ini memakai data <b>simulasi</b>. Sumber: '+esc(SimProvider.source);
+  return 'Data diambil terjadwal dari '+esc(Market.source||'penyedia data')+' lalu disimpan di <span class="num">data/market.json</span>. Terakhir diperbarui '+esc(fmtDateTime(Market.lastUpdate()))+'. Emas dihitung dari harga emas dunia dikali kurs USD/IDR, bukan harga Antam. Sumber ini tidak resmi dan bisa berubah atau berhenti sewaktu-waktu.';
+}
+function alignSeries(ids,tf){
+  var ser=ids.map(function(id){return Market.series(id,tf);}),set={},k;
+  ser.forEach(function(s){s.t.forEach(function(t){set[t]=1;});});
+  var grid=Object.keys(set).map(Number).sort(function(a,b){return a-b;});
+  var cols=ser.map(function(s){var out=[],p=0,last=NaN;for(k=0;k<grid.length;k++){while(p<s.t.length&&s.t[p]<=grid[k]){last=s.v[p];p++;}out.push(last);}return out;});
+  var start=0;
+  while(start<grid.length&&cols.some(function(c){return !isFinite(c[start]);}))start++;
+  if(start>=grid.length-1)start=0;
+  return {t:grid.slice(start),cols:cols.map(function(c){return c.slice(start);}),intraday:ser.some(function(s){return s.intraday;})};
+}
+function pillHtml(c,tf,big,id){
+  var cls=c>0.005?'up':c<-0.005?'down':'';
+  return '<span class="pill '+cls+(big?' big':'')+'" data-chg="'+id+'"'+(tf?' data-tf="'+tf+'"':'')+(big?' data-big="1"':'')+'>'+(c>0.005?'▲ ':c<-0.005?'▼ ':'– ')+pct(c)+'</span>';
+}
+
+/* =====================================================================
+   Charts: dependency-free SVG line / band chart + candlesticks
+   ===================================================================== */
+var uid=0;
+function pathOf(vals,X,Y){var d='',pen=false;for(var i=0;i<vals.length;i++){var v=vals[i];if(!isFinite(v)){pen=false;continue;}d+=(pen?'L':'M')+X(i).toFixed(1)+' '+Y(v).toFixed(1);pen=true;}return d;}
+function drawLine(host,cfg){
+  var W=host.clientWidth,H=host.clientHeight;if(W<20||H<20)return;
+  var axis=cfg.axis||false;
+  var m={l:axis==='left'?50:4,r:cfg.endLabels?100:(axis==='right'?58:4),t:axis?10:4,b:axis?22:4};
+  if(axis==='left'&&!cfg.endLabels)m.r=8;
+  var iw=W-m.l-m.r,ih=H-m.t-m.b,S=cfg.series,n=S[0].v.length,min=Infinity,max=-Infinity;
+  function consider(v){if(isFinite(v)){if(v<min)min=v;if(v>max)max=v;}}
+  S.forEach(function(s){s.v.forEach(consider);});
+  (cfg.bands||[]).forEach(function(b){b.lo.forEach(consider);b.hi.forEach(consider);});
+  if(cfg.baseline!=null)consider(cfg.baseline);
+  if(!isFinite(min))return;
+  if(max===min){max+=1;min-=1;}
+  var pv=(max-min)*0.08;min-=pv;max+=pv;
+  var X=function(i){return m.l+(n<2?0:i/(n-1)*iw);};
+  var Y=function(v){return m.t+(1-(v-min)/(max-min))*ih;};
+  var gid='g'+(++uid);
+  var svg='<svg width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+esc(cfg.label||'Grafik')+'">';
+  if(axis){
+    niceTicks(min,max,5).forEach(function(t){
+      var y=Y(t);
+      svg+='<line class="gl" x1="'+m.l+'" x2="'+(W-m.r)+'" y1="'+y.toFixed(1)+'" y2="'+y.toFixed(1)+'"/>';
+      var lx=axis==='left'?m.l-6:W-m.r+6;
+      svg+='<text class="al" x="'+lx+'" y="'+(y+4).toFixed(1)+'" text-anchor="'+(axis==='left'?'end':'start')+'">'+esc(cfg.yFmt?cfg.yFmt(t):nf(t))+'</text>';
+    });
+    if(cfg.xLabel){
+      [0,1/3,2/3,1].forEach(function(f,k){
+        var i=Math.round(f*(n-1));
+        svg+='<text class="al" x="'+X(i).toFixed(1)+'" y="'+(H-6)+'" text-anchor="'+(k===0?'start':k===3?'end':'middle')+'">'+esc(cfg.xLabel(i))+'</text>';
+      });
+    }
+  }
+  (cfg.bands||[]).forEach(function(b){
+    var d='',i;
+    for(i=0;i<n;i++)d+=(i?'L':'M')+X(i).toFixed(1)+' '+Y(b.hi[i]).toFixed(1);
+    for(i=n-1;i>=0;i--)d+='L'+X(i).toFixed(1)+' '+Y(b.lo[i]).toFixed(1);
+    svg+='<path d="'+d+'Z" style="fill:'+b.color+';opacity:'+(b.opacity||.15)+'"/>';
+  });
+  if(cfg.baseline!=null)svg+='<line class="bl" x1="'+m.l+'" x2="'+(W-m.r)+'" y1="'+Y(cfg.baseline).toFixed(1)+'" y2="'+Y(cfg.baseline).toFixed(1)+'"/>';
+  if(cfg.area){
+    var s0=S[0],bot=(m.t+ih).toFixed(1);
+    var d0=pathOf(s0.v,X,Y)+'L'+X(n-1).toFixed(1)+' '+bot+'L'+X(0).toFixed(1)+' '+bot+'Z';
+    svg+='<defs><linearGradient id="'+gid+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:'+s0.color+';stop-opacity:.24"/><stop offset="1" style="stop-color:'+s0.color+';stop-opacity:0"/></linearGradient></defs><path d="'+d0+'" fill="url(#'+gid+')"/>';
+  }
+  S.forEach(function(s){
+    svg+='<path d="'+pathOf(s.v,X,Y)+'" fill="none" style="stroke:'+s.color+'" stroke-width="'+(s.width||2)+'" stroke-linejoin="round" stroke-linecap="round"'+(s.dash?' stroke-dasharray="'+s.dash+'"':'')+' opacity="'+(s.opacity||1)+'"/>';
+  });
+  if(!cfg.noDots){
+    S.forEach(function(s,k){
+      if(k>0&&!cfg.endLabels)return;
+      var lv=s.v[n-1];if(!isFinite(lv))return;
+      svg+='<circle cx="'+X(n-1).toFixed(1)+'" cy="'+Y(lv).toFixed(1)+'" r="3.2" style="fill:'+s.color+'"/>';
+    });
+  }
+  if(cfg.endLabels){
+    var items=S.map(function(s,k){return {y:Y(s.v[n-1]),k:k};}).sort(function(a,b){return a.y-b.y;});
+    for(var q=1;q<items.length;q++){if(items[q].y-items[q-1].y<15)items[q].y=items[q-1].y+15;}
+    items.forEach(function(it){svg+='<text class="el" x="'+(W-m.r+8)+'" y="'+(it.y+4).toFixed(1)+'" style="fill:'+S[it.k].color+'">'+esc(cfg.endLabels[it.k])+'</text>';});
+  }
+  if(cfg.marker!=null){
+    var mx=X(cfg.marker).toFixed(1);
+    svg+='<line class="ch" x1="'+mx+'" x2="'+mx+'" y1="'+m.t+'" y2="'+(m.t+ih)+'" stroke-dasharray="4 3"/>';
+    svg+='<circle cx="'+mx+'" cy="'+Y(S[0].v[cfg.marker]).toFixed(1)+'" r="5" style="fill:'+S[0].color+'" stroke="var(--surface)" stroke-width="2"/>';
+  }
+  if(cfg.tip){
+    svg+='<line class="ch" display="none" x1="0" x2="0" y1="'+m.t+'" y2="'+(m.t+ih)+'"/>';
+    S.forEach(function(s){svg+='<circle class="hd" display="none" r="4" style="fill:'+s.color+'"/>';});
+    svg+='<rect class="ov" x="'+m.l+'" y="0" width="'+iw+'" height="'+H+'" fill="transparent"/>';
+  }
+  svg+='</svg>';
+  host.innerHTML=svg+(cfg.tip?'<div class="tip" hidden></div>':'');
+  if(!cfg.tip)return;
+  var ov=$('.ov',host),ch=$('line.ch:not([stroke-dasharray])',host),tip=$('.tip',host),dots=$$('.hd',host);
+  function move(e){
+    var b=host.getBoundingClientRect(),x=e.clientX-b.left;
+    var i=clamp(Math.round((x-m.l)/iw*(n-1)),0,n-1);
+    ch.setAttribute('x1',X(i));ch.setAttribute('x2',X(i));ch.removeAttribute('display');
+    dots.forEach(function(d,k){var v=S[k].v[i];if(isFinite(v)){d.setAttribute('cx',X(i));d.setAttribute('cy',Y(v));d.removeAttribute('display');}else d.setAttribute('display','none');});
+    tip.innerHTML=cfg.tip(i);tip.hidden=false;
+    var tw=tip.offsetWidth,left=X(i)+12;if(left+tw>W-4)left=X(i)-tw-12;
+    tip.style.left=Math.max(4,left)+'px';tip.style.top='4px';
+    host.dataset.hover='1';
+  }
+  function leave(){ch.setAttribute('display','none');dots.forEach(function(d){d.setAttribute('display','none');});tip.hidden=true;delete host.dataset.hover;}
+  ov.addEventListener('pointermove',move);ov.addEventListener('pointerdown',move);
+  ov.addEventListener('pointerleave',leave);ov.addEventListener('pointercancel',leave);
+}
+var Charts={
+  reg:new Map(),
+  mount:function(host,fn){if(!host)return;this.reg.set(host,fn);this.draw(host);},
+  draw:function(host){var fn=this.reg.get(host);if(!fn)return;if(!host.isConnected){this.reg.delete(host);return;}drawLine(host,fn());},
+  redrawAll:function(skipHover){var self=this;Array.from(this.reg.keys()).forEach(function(h){if(!h.isConnected){self.reg.delete(h);return;}if(skipHover&&h.dataset.hover==='1')return;self.draw(h);});},
+  clearPage:function(){var ov=$('#overlay'),self=this;Array.from(this.reg.keys()).forEach(function(h){if(!ov.contains(h))self.reg.delete(h);});}
+};
+function yDec(vals){var mn=Math.min.apply(null,vals),mx=Math.max.apply(null,vals),sp=mx-mn;return sp<5?2:sp<50?1:0;}
+function xText(tf,s,i){return fmtDate(s.t[i]);}
+function priceCfg(id,tf,opts){
+  opts=opts||{};
+  var a=BY[id],s=Market.series(id,tf),v=s.v,up=v[v.length-1]>=v[0];
+  var series=[{v:v,color:up?'var(--up)':'var(--down)',width:2}];
+  (opts.ma||[]).forEach(function(p,k){series.push({v:sma(v,p),color:k?'var(--s2)':'var(--s1)',width:1.4,dash:k?'5 3':null});});
+  var dec=yDec(v),st=STATUS[Market.status(id)].label;
+  return {series:series,area:true,axis:opts.noAxis?false:'right',baseline:v[0],noDots:false,
+    label:'Grafik harga '+a.name+', '+TFS[tf].name+' ('+statusLong(id)+')',
+    yFmt:function(t){return nf(t,dec);},xLabel:function(i){return xText(tf,s,i);},
+    tip:opts.noTip?null:function(i){return '<b>'+esc(fmtPrice(a,v[i]))+'</b><span>'+esc(s.intraday?fmtDateTime(s.t[i]):fmtDate(s.t[i]))+'</span><em>'+st+'</em>';}};
+}
+function sparkCfg(id,tf){var v=Market.series(id,tf).v,up=v[v.length-1]>=v[0];return {series:[{v:v,color:up?'var(--up)':'var(--down)',width:1.6}],noDots:true,label:'Grafik mini '+BY[id].name};}
+function mountSparks(root){$$('[data-spark]',root).forEach(function(h){Charts.mount(h,function(){return sparkCfg(h.dataset.spark,h.dataset.tf||Store.state.tf);});});}
+
+function drawCandles(host,candles,sel){
+  var W=host.clientWidth,H=host.clientHeight;if(W<20||H<20)return;
+  var mn=Infinity,mx=-Infinity;candles.forEach(function(c){mn=Math.min(mn,c.l);mx=Math.max(mx,c.h);});
+  var pv=(mx-mn)*0.08;mn-=pv;mx+=pv;
+  var m={l:4,r:44,t:8,b:8},iw=W-m.l-m.r,ih=H-m.t-m.b,n=candles.length,cw=iw/n;
+  var Y=function(v){return m.t+(1-(v-mn)/(mx-mn))*ih;};
+  var svg='<svg width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Grafik candlestick contoh, 24 batang">';
+  niceTicks(mn,mx,4).forEach(function(t){svg+='<line class="gl" x1="'+m.l+'" x2="'+(W-m.r)+'" y1="'+Y(t).toFixed(1)+'" y2="'+Y(t).toFixed(1)+'"/><text class="al" x="'+(W-m.r+6)+'" y="'+(Y(t)+4).toFixed(1)+'">'+nf(t,0)+'</text>';});
+  candles.forEach(function(c,i){
+    var x=m.l+i*cw+cw/2,up=c.c>=c.o,col=up?'var(--up)':'var(--down)',bw=Math.max(3,cw*0.58);
+    var top=Y(Math.max(c.o,c.c)),bot=Y(Math.min(c.o,c.c));
+    if(i===sel)svg+='<rect x="'+(m.l+i*cw).toFixed(1)+'" y="'+m.t+'" width="'+cw.toFixed(1)+'" height="'+ih+'" style="fill:var(--accent-soft)"/>';
+    svg+='<g data-i="'+i+'" style="cursor:pointer"><rect x="'+(m.l+i*cw).toFixed(1)+'" y="0" width="'+cw.toFixed(1)+'" height="'+H+'" fill="transparent"/><line x1="'+x.toFixed(1)+'" x2="'+x.toFixed(1)+'" y1="'+Y(c.h).toFixed(1)+'" y2="'+Y(c.l).toFixed(1)+'" style="stroke:'+col+'" stroke-width="1.5"/><rect x="'+(x-bw/2).toFixed(1)+'" y="'+top.toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+Math.max(2,bot-top).toFixed(1)+'" rx="1.5" style="fill:'+col+'"/></g>';
+  });
+  host.innerHTML=svg+'</svg>';
+}
+
+/* =====================================================================
+   UI helpers: toast
+   ===================================================================== */
+function toast(msg,kind){
+  var box=$('#toast'),el=document.createElement('div');
+  el.textContent=msg;if(kind)el.className=kind;box.appendChild(el);
+  setTimeout(function(){if(el.parentNode)el.parentNode.removeChild(el);},kind==='alert'?6000:3200);
+}
+
+/* =====================================================================
+   Learning content
+   ===================================================================== */
+var LESSONS=[
+{id:'dasar',title:'Mulai dari nol',mins:5,blurb:'Apa itu investasi, apa bedanya dengan menabung, dan apa yang perlu siap sebelum mulai.',
+ body:'<h3>Apa itu investasi?</h3><p>Investasi berarti menaruh uang pada suatu aset dengan harapan nilainya bertambah seiring waktu. Kata kuncinya adalah <em>harapan</em>. Tidak ada investasi yang pasti untung, dan nilainya bisa turun di bawah jumlah uang yang Anda tanam.</p>'+
+ '<h3>Menabung, berinvestasi, dan spekulasi</h3><dl class="defs"><div><dt>Menabung</dt><dd>Uang disimpan untuk keperluan dekat. Nilainya stabil dan mudah diambil, tetapi pertumbuhannya kecil.</dd></div><div><dt>Berinvestasi</dt><dd>Uang ditanam untuk tujuan jangka menengah atau panjang. Nilainya naik-turun, dengan harapan tumbuh dari waktu ke waktu.</dd></div><div><dt>Spekulasi</dt><dd>Mengejar selisih harga dalam waktu singkat. Peluang untung dan rugi sama-sama besar, dan hasilnya sulit diprediksi.</dd></div></dl>'+
+ '<h3>Mengapa orang berinvestasi?</h3><p>Harga barang cenderung naik dari tahun ke tahun (inflasi). Jika inflasi 4% per tahun, uang Rp 100 juta yang hanya disimpan tunai setara daya beli sekitar Rp 96 juta setahun kemudian. Investasi adalah salah satu cara menjaga atau menumbuhkan daya beli, dengan imbalan berupa ketidakpastian.</p>'+
+ '<h3>Sebelum mulai</h3><ul><li>Siapkan dana darurat di tempat yang mudah dicairkan. Umumnya dianjurkan 3 sampai 6 bulan pengeluaran.</li><li>Tentukan tujuan dan jangka waktunya. Dana untuk 6 bulan lagi berbeda dengan dana untuk 10 tahun lagi.</li><li>Pakai uang yang tidak Anda butuhkan dalam waktu dekat.</li></ul>',
+ points:['Investasi mengandung ketidakpastian: nilai bisa naik dan bisa turun.','Dana darurat dan kebutuhan dekat didahulukan.','Tujuan dan jangka waktu menentukan pilihan instrumen.'],
+ quiz:[{q:'Pernyataan mana yang paling tepat?',o:['Investasi pasti untung jika dipegang cukup lama.','Investasi mengandung ketidakpastian: nilainya bisa naik maupun turun.','Investasi aman selama memilih aset yang populer.'],a:1,why:'Tidak ada aset yang bebas risiko sepenuhnya, dan popularitas bukan jaminan.'},
+  {q:'Uang mana yang paling pantas dipakai untuk investasi berisiko?',o:['Uang untuk cicilan bulan depan.','Dana darurat.','Uang yang tidak dibutuhkan dalam waktu dekat, setelah dana darurat tersedia.'],a:2,why:'Jika harga sedang turun, Anda tidak boleh terpaksa menjual karena butuh uang.'}]},
+
+{id:'instrumen',title:'Mengenal instrumen',mins:6,blurb:'Saham, obligasi, reksa dana, emas, dan kripto: apa itu, dari mana hasilnya, dan apa risikonya.',
+ body:'<p>Setiap instrumen punya cara kerja, sumber hasil, dan risiko berbeda. Tabel ini ringkasan umum, bukan peringkat mana yang terbaik.</p><div class="tblwrap"><table><thead><tr><th>Instrumen</th><th>Apa itu</th><th>Sumber hasil</th><th>Risiko utama</th></tr></thead><tbody>'+
+ '<tr><td>Saham</td><td>Kepemilikan sebagian kecil perusahaan.</td><td>Kenaikan harga, dividen jika dibagikan.</td><td>Harga turun, kinerja perusahaan memburuk. Kerugian bisa besar.</td></tr>'+
+ '<tr><td>Obligasi / SBN</td><td>Surat utang: Anda meminjamkan uang ke penerbit.</td><td>Kupon (bunga) berkala dan pokok kembali saat jatuh tempo.</td><td>Penerbit gagal bayar. Harga turun jika dijual sebelum jatuh tempo saat suku bunga naik.</td></tr>'+
+ '<tr><td>Reksa dana</td><td>Dana bersama yang dikelola manajer investasi.</td><td>Tergantung isi: pasar uang, obligasi, saham, atau campuran.</td><td>Nilai unit turun. Risikonya mengikuti isi portofolio.</td></tr>'+
+ '<tr><td>Emas</td><td>Logam mulia, sering dipakai sebagai penyimpan nilai.</td><td>Perubahan harga emas.</td><td>Harga berfluktuasi, ada selisih jual-beli, tidak ada bunga atau dividen.</td></tr>'+
+ '<tr><td>Kripto</td><td>Aset digital berbasis blockchain.</td><td>Umumnya perubahan harga.</td><td>Fluktuasi sangat besar, risiko platform dan keamanan, aturan bisa berubah.</td></tr></tbody></table></div>'+
+ '<h3>Cara memilih untuk pemula</h3><p>Mulailah dari memahami satu atau dua instrumen sampai Anda bisa menjelaskan dari mana hasilnya berasal dan apa yang bisa membuatnya turun. Jika Anda tidak bisa menjelaskannya, tunda dulu.</p><h3>Hasil masa lalu</h3><p>Grafik naik di masa lalu tidak menjamin hal yang sama di masa depan. Gunakan sebagai bahan belajar, bukan janji.</p>',
+ points:['Pahami sumber hasil sebelum membeli apa pun.','Obligasi dan saham berbeda mendasar: yang satu pinjaman, yang lain kepemilikan.','Hasil masa lalu tidak menjamin hasil masa depan.'],
+ quiz:[{q:'Obligasi atau SBN pada dasarnya adalah...',o:['Kepemilikan sebagian perusahaan.','Surat utang: Anda meminjamkan uang ke penerbit.','Aset digital.'],a:1,why:'Pemegang obligasi adalah pemberi pinjaman, biasanya menerima kupon berkala.'},
+  {q:'Emas umumnya memberi hasil dari...',o:['Dividen rutin.','Bunga bulanan.','Perubahan harga emas itu sendiri.'],a:2,why:'Emas tidak menghasilkan arus kas, jadi hasilnya bergantung pada harga.'}]},
+
+{id:'risiko',title:'Risiko dan imbal hasil',mins:7,blurb:'Jenis-jenis risiko, hubungan risiko dengan potensi hasil, dan dua istilah penting: volatilitas dan drawdown.',
+ body:'<h3>Risiko bukan hanya harga turun</h3><ul><li><b>Risiko pasar</b>: harga seluruh pasar turun.</li><li><b>Risiko spesifik</b>: masalah pada satu perusahaan atau aset.</li><li><b>Inflasi</b>: hasil tidak mengejar kenaikan harga barang.</li><li><b>Likuiditas</b>: sulit dijual cepat pada harga wajar.</li><li><b>Platform dan penipuan</b>: aplikasi tidak berizin atau akun diretas.</li><li><b>Perilaku</b>: keputusan emosional, misalnya panik saat harga turun.</li></ul>'+
+ '<h3>Risiko dan potensi hasil</h3><p>Aset yang berpotensi memberi hasil lebih besar biasanya juga lebih tidak pasti. Itu tidak berarti risiko tinggi pasti menguntungkan. Risiko tinggi juga bisa berarti rugi besar.</p>'+
+ '<h3>Dua istilah penting</h3><p><b>Volatilitas</b> mengukur seberapa lebar harga bergerak naik-turun. <b>Drawdown</b> adalah penurunan dari puncak ke titik terendah sesudahnya. Jika nilai turun dari 100 ke 70, drawdown-nya 30%.</p>'+
+ '<h3>Coba sendiri</h3><p>Setiap jalur di bawah memakai asumsi hasil rata-rata yang sama, 7% per tahun. Bedanya hanya volatilitas. Tekan Acak ulang beberapa kali dan perhatikan sebaran nilai akhirnya.</p><div data-widget="paths"></div>',
+ points:['Potensi hasil lebih besar biasanya datang bersama ketidakpastian lebih besar.','Volatilitas tinggi berarti rentang hasil lebih lebar, ke atas maupun ke bawah.','Drawdown menunjukkan seberapa dalam penurunan yang pernah terjadi.'],
+ quiz:[{q:'Volatilitas tinggi berarti...',o:['Harga pasti naik.','Harga bergerak naik-turun lebih lebar.','Risiko hilang.'],a:1,why:'Volatilitas mengukur lebar pergerakan, bukan arahnya.'},
+  {q:'Drawdown adalah...',o:['Penurunan dari titik tertinggi ke titik terendah sesudahnya.','Kenaikan harga harian.','Biaya transaksi.'],a:0,why:'Drawdown membantu menilai seberapa berat penurunan yang pernah dialami sebuah aset.'}]},
+
+{id:'grafik',title:'Membaca grafik harga',mins:6,blurb:'Sumbu, garis dan candlestick, timeframe, serta apa yang tidak bisa dikatakan sebuah grafik.',
+ body:'<h3>Grafik garis</h3><p>Garis menghubungkan harga penutupan dari waktu ke waktu. Sumbu mendatar adalah waktu, sumbu tegak adalah harga. Garis putus-putus di grafik Pasar menandai harga di awal periode, sehingga Anda bisa melihat posisi harga sekarang terhadap titik awal.</p>'+
+ '<h3>Candlestick</h3><p>Satu batang mewakili satu periode (misalnya satu hari). <b>Badan</b> menunjukkan jarak harga buka ke harga tutup. <b>Sumbu tipis</b> menunjukkan harga tertinggi dan terendah dalam periode itu. Warna berbeda antar platform; di sini hijau berarti tutup lebih tinggi dari buka. Klik sebuah batang untuk melihat rinciannya.</p><div data-widget="candles"></div>'+
+ '<h3>Timeframe</h3><p>Grafik 1 hari dan 1 tahun untuk aset yang sama bisa terlihat berlawanan: turun hari ini, naik setahun terakhir. Keduanya benar, hanya menangkap jangka waktu berbeda. Pilih timeframe sesuai tujuan Anda.</p>'+
+ '<h3>Batas sebuah grafik</h3><p>Grafik menunjukkan apa yang sudah terjadi. Garis tren, area support, dan resistance adalah cara orang merangkum masa lalu, bukan pagar yang pasti menahan harga.</p>',
+ points:['Badan candle: jarak buka-tutup. Sumbu: tertinggi-terendah.','Timeframe berbeda bisa memberi kesan berbeda untuk aset yang sama.','Grafik merangkum masa lalu dan tidak menjamin arah berikutnya.'],
+ quiz:[{q:'Badan sebuah candle menunjukkan...',o:['Jarak harga buka dan harga tutup.','Volume transaksi.','Hanya harga tertinggi.'],a:0,why:'Sumbu tipis di atas dan bawah badan yang menunjukkan harga tertinggi dan terendah.'},
+  {q:'Mengapa grafik 1 hari dan 1 tahun bisa tampak berlawanan?',o:['Salah satunya data palsu.','Timeframe berbeda menangkap jangka waktu berbeda.','Grafik selalu berubah sendiri.'],a:1,why:'Pilih timeframe yang sesuai dengan tujuan dan jangka waktu Anda.'}]},
+
+{id:'analisis',title:'Analisis fundamental dan teknikal',mins:8,blurb:'Dua cara pandang yang sering dipakai, beserta batasannya.',
+ body:'<h3>Fundamental: bisnisnya sehat dan harganya wajar?</h3><p>Analisis fundamental mempelajari perusahaan lewat laporan keuangan dan prospek bisnisnya. Beberapa ukuran yang sering dipakai:</p><ul><li><b>Laba</b>: apakah perusahaan menghasilkan keuntungan, dan apakah cenderung naik.</li><li><b>P/E (price to earnings)</b>: harga saham dibagi laba per saham. Menunjukkan berapa kali laba yang dibayar pasar untuk satu saham.</li><li><b>ROE</b>: laba dibandingkan modal pemegang saham, ukuran efisiensi.</li><li><b>Utang</b>: beban utang yang terlalu besar bisa membahayakan perusahaan saat kondisi sulit.</li><li><b>Dividen</b>: bagian laba yang dibagikan, jika ada.</li></ul><p>Angka ini baru berguna jika dibandingkan dengan perusahaan sejenis dan dengan riwayatnya sendiri. P/E rendah bisa berarti murah, bisa juga berarti pasar melihat labanya akan turun.</p>'+
+ '<h3>Teknikal: apa yang dikatakan pola harga?</h3><p>Analisis teknikal mempelajari pergerakan harga dan volume. Dua alat dasar:</p><ul><li><b>Rata-rata bergerak (MA)</b>: rata-rata harga penutupan beberapa periode terakhir. Meratakan gerakan harian agar tren lebih terlihat.</li><li><b>RSI</b>: ukuran momentum dari 0 sampai 100. Angka di atas 70 sering disebut jenuh beli dan di bawah 30 jenuh jual. Itu kebiasaan membaca, bukan sinyal otomatis.</li></ul>'+
+ '<h3>Coba sendiri</h3><p>Grafik di bawah memakai data IHSG satu tahun yang sedang dimuat di Finvest. Nyalakan MA 20 dan MA 50, lalu lihat bagaimana garis rata-rata selalu tertinggal dari harga.</p><div data-widget="ma"></div>'+
+ '<h3>Batasnya</h3><p>Keduanya alat bantu memahami, bukan mesin pemberi jawaban. MA tertinggal karena dihitung dari masa lalu, dan sering memberi sinyal palsu saat harga bergerak menyamping.</p>',
+ points:['Fundamental menilai bisnis dan harga wajar; teknikal membaca pola harga.','P/E rendah belum tentu murah. Cari tahu alasannya.','Indikator teknikal bukan sinyal beli atau jual otomatis.'],
+ quiz:[{q:'P/E rendah selalu berarti saham murah dan layak dibeli?',o:['Ya, selalu.','Tidak, perlu dilihat alasan P/E rendah, misalnya laba yang menurun.','Hanya berlaku untuk emas.'],a:1,why:'Rasio harus dibandingkan dengan perusahaan sejenis dan riwayatnya.'},
+  {q:'Rata-rata bergerak (MA) dihitung dari...',o:['Rata-rata harga beberapa periode terakhir.','Prediksi harga besok.','Laba perusahaan.'],a:0,why:'Karena dihitung dari data lampau, MA selalu tertinggal dari harga.'}]},
+
+{id:'diversifikasi',title:'Diversifikasi dan manajemen risiko',mins:7,blurb:'Menyebar risiko, menentukan porsi, dan alasan diversifikasi tidak menghapus risiko.',
+ body:'<h3>Jangan taruh semua telur di satu keranjang</h3><p>Diversifikasi berarti menyebar dana ke beberapa aset yang tidak bergerak persis sama. Jika satu turun, yang lain mungkin tidak ikut turun sedalam itu. Penyebaran bisa dilakukan antar jenis aset, antar sektor, dan antar waktu (membeli bertahap).</p>'+
+ '<h3>Korelasi menentukan manfaatnya</h3><p>Korelasi mengukur seberapa searah dua aset bergerak, dari 1 (selalu searah) sampai -1 (selalu berlawanan). Dua aset dengan korelasi tinggi memberi manfaat penyebaran yang kecil. Geser pengaturan di bawah untuk melihatnya.</p><div data-widget="divers"></div>'+
+ '<h3>Praktik pengelolaan risiko</h3><ul><li><b>Batasi porsi</b>: tentukan kerugian maksimum yang sanggup Anda terima untuk satu aset, sebelum membeli.</li><li><b>Beli bertahap</b>: menyebar waktu pembelian mengurangi risiko membeli seluruhnya di waktu yang kurang baik, meski tidak menjamin hasil lebih baik.</li><li><b>Tinjau berkala</b>: porsi bisa bergeser seiring harga. Tinjau apakah masih sesuai tujuan.</li><li><b>Hindari utang untuk berinvestasi</b>: kerugian tetap harus dibayar.</li></ul>'+
+ '<h3>Batasnya</h3><p>Diversifikasi mengurangi risiko spesifik, tetapi tidak menghapus risiko pasar. Saat krisis besar, banyak aset bisa turun bersamaan.</p>',
+ points:['Diversifikasi mengurangi dampak satu aset yang buruk, bukan menghapus risiko.','Korelasi rendah memberi manfaat penyebaran lebih besar.','Tentukan batas kerugian sebelum membeli, bukan sesudahnya.'],
+ quiz:[{q:'Tujuan diversifikasi adalah...',o:['Menjamin tidak pernah rugi.','Mengurangi dampak satu aset yang buruk terhadap keseluruhan.','Memastikan untung lebih besar.'],a:1,why:'Diversifikasi mengurangi risiko spesifik, tetapi risiko pasar tetap ada.'},
+  {q:'Dua aset yang bergerak sangat searah (korelasi tinggi) memberi manfaat diversifikasi...',o:['Lebih besar.','Lebih kecil.','Sama saja.'],a:1,why:'Jika keduanya turun bersamaan, penyebaran tidak banyak membantu.'}]},
+
+{id:'perilaku',title:'Psikologi dan kesalahan umum',mins:6,blurb:'Emosi sering lebih berbahaya dari harga. Kenali jebakan umum dan tanda penipuan.',
+ body:'<h3>Jebakan perilaku</h3><dl class="defs"><div><dt>FOMO</dt><dd>Takut ketinggalan. Membeli karena harga sedang ramai naik, bukan karena paham asetnya.</dd></div><div><dt>Panik jual</dt><dd>Menjual saat harga turun tajam, lalu mengunci kerugian yang mungkin belum perlu.</dd></div><div><dt>Terlalu percaya diri</dt><dd>Menganggap beberapa kali untung berarti sudah paham. Pasar bisa berubah.</dd></div><div><dt>Utang atau leverage</dt><dd>Memperbesar posisi dengan pinjaman. Untung dan rugi sama-sama membesar, dan rugi tetap harus dibayar.</dd></div></dl>'+
+ '<h3>Tanda investasi yang patut dicurigai</h3><ul><li>Menjanjikan hasil tetap tinggi dan tanpa risiko.</li><li>Menekan Anda untuk segera memutuskan atau mengajak orang lain bergabung demi bonus.</li><li>Tidak jelas dari mana hasilnya berasal.</li><li>Pihak penawar atau platformnya tidak jelas izinnya. Periksa daftar entitas berizin di situs OJK.</li></ul>'+
+ '<h3>Pertanyaan yang membantu</h3><ul><li>Dari mana hasil investasi ini berasal?</li><li>Apa skenario terburuknya, dan sanggupkah saya menanggungnya?</li><li>Apakah ini sesuai tujuan dan jangka waktu saya?</li></ul>',
+ points:['Tulis rencana dan batas kerugian sebelum membeli, agar emosi tidak memimpin.','Hasil tinggi tanpa risiko adalah tanda bahaya.','Periksa izin pihak penawar sebelum menyetor uang.'],
+ quiz:[{q:'Mana yang merupakan tanda patut dicurigai?',o:['Penawaran hasil tetap tinggi tanpa risiko.','Risiko dijelaskan dan pihak penawar berizin.','Biaya tertulis jelas.'],a:0,why:'Hasil dan risiko berjalan beriringan. Janji tanpa risiko hampir selalu menyesatkan.'},
+  {q:'Harga turun tajam dan Anda panik. Langkah yang lebih sehat adalah...',o:['Menjual semuanya sekarang.','Melihat kembali rencana dan jangka waktu sebelum bertindak.','Menambah dana dengan utang.'],a:1,why:'Keputusan yang mengacu pada rencana lebih jarang disesali dibanding keputusan saat panik.'}]}
+];
+var LBY={};LESSONS.forEach(function(l){LBY[l.id]=l;});
+
+/* =====================================================================
+   Learning widgets
+   ===================================================================== */
+var Widgets={
+  paths:function(host){
+    var seed=Math.floor(Math.random()*1e6);
+    host.innerHTML='<h4>Delapan kemungkinan jalur selama 5 tahun</h4><div class="ctl"><div class="field"><label for="pf">Volatilitas</label><select class="input" id="pf"><option value="3">Rendah (3% per tahun)</option><option value="15" selected>Sedang (15% per tahun)</option><option value="40">Tinggi (40% per tahun)</option></select></div><button class="btn btn-sm" type="button" id="pr">Acak ulang</button></div><div class="chart"></div><p class="out" id="po" aria-live="polite"></p>';
+    var ch=$('.chart',host),sel=$('#pf',host),out=$('#po',host);
+    function build(){
+      var sig=Number(sel.value)/100,r=rng(seed),mu=.07,drift=(mu-sig*sig/2)/12,s=sig/Math.sqrt(12),paths=[],ends=[];
+      for(var k=0;k<8;k++){var v=100,arr=[100];for(var m=1;m<=60;m++){v*=Math.exp(drift+s*gauss(r));arr.push(v);}paths.push(arr);ends.push(v);}
+      var lo=Math.min.apply(null,ends),hi=Math.max.apply(null,ends);
+      out.textContent='Dari 8 jalur yang dimulai di 100: nilai akhir terendah '+nf(lo,0)+', tertinggi '+nf(hi,0)+'. Ini ilustrasi, bukan prediksi.';
+      return {series:paths.map(function(p){return {v:p,color:'var(--s1)',width:1.5,opacity:.6};}),axis:'right',baseline:100,noDots:true,label:'Delapan jalur simulasi',yFmt:function(t){return nf(t,0);},xLabel:function(i){return i===0?'Awal':nf(i/12,0)+' th';}};
+    }
+    Charts.mount(ch,build);
+    sel.addEventListener('change',function(){Charts.draw(ch);});
+    $('#pr',host).addEventListener('click',function(){seed=Math.floor(Math.random()*1e6);Charts.draw(ch);});
+  },
+  candles:function(host){
+    var candles=[],r=rng(4242),price=100,i,sel=17;
+    for(i=0;i<24;i++){var o=price,c=o*(1+gauss(r)*0.022),hi=Math.max(o,c)*(1+Math.abs(gauss(r))*0.012),lo=Math.min(o,c)*(1-Math.abs(gauss(r))*0.012);candles.push({o:o,h:hi,l:lo,c:c});price=c;}
+    host.innerHTML='<h4>Candlestick contoh (24 periode, simulasi)</h4><div class="chart"></div><div class="row" style="margin-top:8px"><button class="btn btn-sm" type="button" id="cp">Sebelumnya</button><button class="btn btn-sm" type="button" id="cn">Berikutnya</button></div><p class="out" id="co" aria-live="polite"></p>';
+    var ch=$('.chart',host),out=$('#co',host);
+    function show(){
+      var c=candles[sel],up=c.c>=c.o,chg=(c.c/c.o-1)*100;
+      out.innerHTML='<b>Periode '+(sel+1)+'</b>: dibuka di '+nf(c.o,1)+', ditutup di '+nf(c.c,1)+' ('+(up?'naik':'turun')+' '+pct(chg)+'). Tertinggi '+nf(c.h,1)+', terendah '+nf(c.l,1)+'. Rentang harga selama periode ini '+nf((c.h/c.l-1)*100,1)+'%.';
+      drawCandles(ch,candles,sel);
+    }
+    Charts.reg.set(ch,function(){return null;});Charts.reg.delete(ch);
+    host._redraw=show;show();
+    ch.addEventListener('click',function(e){var g=e.target.closest('[data-i]');if(g){sel=Number(g.dataset.i);show();}});
+    $('#cp',host).addEventListener('click',function(){sel=(sel+23)%24;show();});
+    $('#cn',host).addEventListener('click',function(){sel=(sel+1)%24;show();});
+    window.addEventListener('resize',function(){if(host.isConnected)show();});
+  },
+  ma:function(host){
+    host.innerHTML='<h4>IHSG 1 tahun dengan rata-rata bergerak</h4><div class="ctl"><label class="check"><input type="checkbox" id="m20" checked> MA 20</label><label class="check"><input type="checkbox" id="m50"> MA 50</label></div><div class="chart"></div><p class="out">Garis rata-rata baru berbelok setelah harga berbelok. Itu sebabnya MA disebut indikator yang tertinggal.</p>';
+    var ch=$('.chart',host);
+    Charts.mount(ch,function(){
+      var ma=[];if($('#m20',host).checked)ma.push(20);if($('#m50',host).checked)ma.push(50);
+      var cfg=priceCfg('IHSG','1T',{ma:ma,noTip:true});
+      cfg.series=cfg.series.map(function(s,k){if(k===0)return s;return {v:s.v,color:ma[k-1]===20?'var(--s1)':'var(--s2)',width:1.6,dash:ma[k-1]===50?'5 3':null};});
+      return cfg;
+    });
+    $$('input',host).forEach(function(inp){inp.addEventListener('change',function(){Charts.draw(ch);});});
+  },
+  divers:function(host){
+    host.innerHTML='<h4>Campuran dua aset contoh</h4><div class="ctl"><div class="field"><div class="rangeval"><label for="dw">Porsi aset A</label><b id="dwv"></b></div><input type="range" id="dw" min="0" max="100" step="2" value="50"></div><div class="field"><div class="rangeval"><label for="dr">Korelasi A dan B</label><b id="drv"></b></div><input type="range" id="dr" min="-50" max="100" step="5" value="30"></div></div><div class="chart"></div><p class="out" id="do" aria-live="polite"></p>';
+    var A=30,B=20,ch=$('.chart',host),w=$('#dw',host),rr=$('#dr',host);
+    function vol(wa,rho){return Math.sqrt(wa*wa*A*A+(1-wa)*(1-wa)*B*B+2*wa*(1-wa)*rho*A*B);}
+    function cur(){return {wa:Number(w.value)/100,rho:Number(rr.value)/100};}
+    Charts.mount(ch,function(){
+      var c=cur(),vals=[];for(var i=0;i<=50;i++)vals.push(vol(i/50,c.rho));
+      return {series:[{v:vals,color:'var(--accent)',width:2.2}],axis:'right',marker:Math.round(c.wa*50),noDots:true,label:'Volatilitas campuran dua aset',yFmt:function(t){return nf(t,0)+'%';},xLabel:function(i){return (i*2)+'% A';},
+        tip:function(i){return '<b>'+(i*2)+'% A / '+(100-i*2)+'% B</b><span>Volatilitas '+nf(vals[i],1)+'%</span>';}};
+    });
+    function upd(){
+      var c=cur();$('#dwv',host).textContent=Math.round(c.wa*100)+'% A / '+Math.round((1-c.wa)*100)+'% B';$('#drv',host).textContent=nf(c.rho,2);
+      $('#do',host).innerHTML='Volatilitas campuran: <b>'+nf(vol(c.wa,c.rho),1)+'%</b> per tahun. Aset A saja '+A+'%, aset B saja '+B+'%. Contoh angka ini hanya ilustrasi.';
+      Charts.draw(ch);
+    }
+    w.addEventListener('input',upd);rr.addEventListener('input',upd);upd();
+  }
+};
+
+/* =====================================================================
+   Simulator (illustrative scenarios under user assumptions)
+   ===================================================================== */
+var PROFILES={
+ tunai:{name:'Konservatif (mirip pasar uang atau deposito)',mu:4.5,vol:1},
+ obligasi:{name:'Pendapatan tetap (obligasi)',mu:6,vol:4},
+ campuran:{name:'Campuran saham dan obligasi',mu:8,vol:11},
+ saham:{name:'Saham (indeks luas)',mu:10,vol:18},
+ volatil:{name:'Aset sangat fluktuatif',mu:12,vol:60}
+};
+var Sim={
+  seed:7,
+  params:function(){var s=Store.state.sim;return s||{initial:5000000,monthly:1000000,years:10,profile:'campuran',mu:8,vol:11};},
+  run:function(p){
+    var months=p.years*12,paths=400,r=rng(this.seed),sig=p.vol/100,mu=p.mu/100,drift=(mu-sig*sig/2)/12,s=sig/Math.sqrt(12);
+    var vals=[],m,k;for(m=0;m<=months;m++)vals.push(new Float64Array(paths));
+    for(k=0;k<paths;k++){var v=p.initial;vals[0][k]=v;for(m=1;m<=months;m++){v=(v+p.monthly)*Math.exp(drift+s*gauss(r));vals[m][k]=v;}}
+    var P={p10:[],p25:[],p50:[],p75:[],p90:[],contrib:[]};
+    for(m=0;m<=months;m++){
+      var a=vals[m].slice().sort(),q=function(f){return a[Math.min(paths-1,Math.floor(f*(paths-1)))];};
+      P.p10.push(q(.1));P.p25.push(q(.25));P.p50.push(q(.5));P.p75.push(q(.75));P.p90.push(q(.9));P.contrib.push(p.initial+p.monthly*m);
+    }
+    var contribEnd=P.contrib[months],lose=0;for(k=0;k<paths;k++)if(vals[months][k]<contribEnd)lose++;
+    P.months=months;P.loss=lose/paths*100;P.paths=paths;return P;
+  },
+  read:function(){
+    var g=function(id){return $('#'+id);};
+    var p={initial:Math.max(0,Number(g('si').value)||0),monthly:Math.max(0,Number(g('sm').value)||0),years:Number(g('sy').value),profile:g('sp').value,mu:Number(g('smu').value),vol:Number(g('sv').value)};
+    return p;
+  },
+  update:function(){
+    var p=this.read();Store.state.sim=p;Store.save();
+    $('#syv').textContent=p.years+' tahun';$('#smuv').textContent=pct(p.mu,1).replace('+','');$('#svv').textContent=nf(p.vol,0)+'%';
+    var R=this.run(p),mo=R.months,last=function(a){return a[mo];};
+    var tx=function(i){return 'Th '+nf(i/12,i%12?1:0);};
+    $('#simout').innerHTML=
+     '<div class="kpis"><div><span>Total setoran</span><b>'+rpShort(last(R.contrib))+'</b><small>modal awal + setoran bulanan</small></div>'+
+     '<div><span>Nilai tengah (median)</span><b>'+rpShort(last(R.p50))+'</b><small>separuh skenario di atas ini</small></div>'+
+     '<div><span>Kurang beruntung</span><b>'+rpShort(last(R.p10))+'</b><small>10% skenario di bawah ini</small></div>'+
+     '<div><span>Lebih beruntung</span><b>'+rpShort(last(R.p90))+'</b><small>10% skenario di atas ini</small></div>'+
+     '<div><span>Nilai akhir &lt; setoran</span><b>'+nf(R.loss,0)+'%</b><small>dari '+R.paths+' skenario</small></div></div>'+
+     '<div class="keyline"><span><i style="background:var(--accent);opacity:.25"></i>80% skenario (P10 sampai P90)</span><span><i style="background:var(--accent);opacity:.5"></i>50% skenario di tengah (P25 sampai P75)</span><span><i style="background:var(--accent)"></i>Median</span><span><i style="background:var(--ink-3);height:2px"></i>Total setoran</span></div>'+
+     '<div class="chart" id="simchart"></div>'+
+     '<p class="fine">Cara membaca: pita menunjukkan sebaran hasil dari '+R.paths+' jalur acak yang memakai asumsi di kiri. Ini ilustrasi untuk memahami ketidakpastian, bukan prediksi dan bukan data historis. Pajak, biaya, dan inflasi tidak dihitung.</p>';
+    Charts.mount($('#simchart'),function(){
+      return {series:[{v:R.p50,color:'var(--accent)',width:2.4},{v:R.contrib,color:'var(--ink-3)',width:1.6,dash:'5 4'}],
+        bands:[{lo:R.p10,hi:R.p90,color:'var(--accent)',opacity:.16},{lo:R.p25,hi:R.p75,color:'var(--accent)',opacity:.28}],
+        axis:'left',noDots:true,label:'Sebaran nilai portofolio simulasi',yFmt:function(t){return rpShort(t).replace('Rp ','');},xLabel:function(i){return tx(i);},
+        tip:function(i){return '<b>'+esc(tx(i))+'</b><span>Median '+rpShort(R.p50[i])+'</span><span>P10 '+rpShort(R.p10[i])+' / P90 '+rpShort(R.p90[i])+'</span><span>Setoran '+rpShort(R.contrib[i])+'</span><em>SIMULASI</em>';}};
+    });
+  }
+};
+
+/* =====================================================================
+   Views
+   ===================================================================== */
+var paused=false;
+function assetOptions(sel,exclude){return ASSETS.filter(function(a){return !exclude||exclude.indexOf(a.id)<0;}).map(function(a){return '<option value="'+a.id+'"'+(a.id===sel?' selected':'')+'>'+esc(a.name)+'</option>';}).join('');}
+function tfSeg(){var tf=Store.state.tf;return '<div class="seg" role="group" aria-label="Pilih timeframe">'+Object.keys(TFS).map(function(k){return '<button type="button" data-act="tf" data-v="'+k+'" aria-pressed="'+(k===tf)+'" title="'+TFS[k].name+'">'+k+'</button>';}).join('')+'</div>';}
+function stamp(){
+  if(Market.anyReal())return '<div class="stamp">'+badge('delayed')+'<span>Diperbarui <span class="num">'+esc(fmtDateTime(Market.lastUpdate()))+'</span>, bukan real-time</span></div>';
+  return '<div class="stamp">'+badge('sim')+'<span>Diperbarui <span class="num" data-clock>'+fmtClock(SimProvider.last)+'</span></span><button class="btn btn-sm btn-ghost" type="button" data-act="pause" id="pauseBtn">'+(paused?'Lanjutkan simulasi':'Jeda simulasi')+'</button></div>';
+}
+
+function viewBeranda(){
+  var strip=['IHSG','EMAS','BTC','USDIDR'].map(function(id){var a=BY[id],c=Market.stats(id,'1B').chg;
+    return '<button class="card tile" type="button" data-act="open-asset" data-id="'+id+'"><b>'+esc(a.name)+'</b><span class="spark" data-spark="'+id+'" data-tf="1B"></span><span class="sub">'+esc(a.cls)+'</span><span class="r"><span class="num" data-price="'+id+'">'+esc(fmtPrice(a,Market.price(id)))+'</span>'+pillHtml(c,'1B',false,id)+'</span></button>';}).join('');
+  return '<section class="hero"><div><p class="eyebrow">Belajar investasi &middot; Pantau pasar</p><h1>Pahami risikonya dulu, baru pantau pasarnya.</h1><p class="lead">Belajar investasi dari nol dengan bahasa sederhana, lalu pantau banyak instrumen dalam satu layar. Tanpa janji untung dan tanpa rekomendasi beli atau jual.</p><div class="cta"><a class="btn btn-primary" href="#belajar">Mulai belajar dari nol</a><a class="btn" href="#pasar">Buka dashboard pasar</a></div></div>'+
+  '<figure class="hero-chart card" style="margin:0"><header><div class="nm"><b>IHSG</b><span class="num" data-price="IHSG">'+esc(fmtPrice(BY.IHSG,Market.price('IHSG')))+'</span>'+pillHtml(Market.stats('IHSG','3B').chg,'3B',false,'IHSG')+'</div>'+badge(null,'IHSG')+'</header><div class="chart" id="heroChart" style="height:270px"></div><figcaption>'+esc(heroCaption())+'</figcaption></figure></section>'+
+  '<section class="section"><h2>Dua jalan masuk</h2><div class="paths"><article class="card path"><p class="eyebrow">Untuk pemula</p><h3>Saya baru mulai</h3><ol><li>Baca dasar investasi dan kenali instrumennya.</li><li>Pahami risiko, grafik harga, dan cara menyebar dana.</li><li>Coba simulator untuk melihat rentang hasil yang mungkin.</li></ol><a class="btn btn-primary" href="#belajar">Mulai belajar</a></article>'+
+  '<article class="card path"><p class="eyebrow">Untuk yang sudah berinvestasi</p><h3>Saya butuh alat pantau</h3><ol><li>Susun dashboard 1, 2, atau 4 grafik sesuai kebutuhan.</li><li>Masukkan aset ke watchlist dan bandingkan performanya.</li><li>Pasang alert harga untuk dipantau saat halaman terbuka.</li></ol><a class="btn btn-primary" href="#pasar">Buka dashboard</a></article></div></section>'+
+  '<section class="section"><h2>Sekilas pasar</h2><p class="fine" style="margin:-8px 0 12px">'+esc(dataLine())+'</p><div class="strip">'+strip+'</div></section>'+
+  '<section class="section"><h2>Prinsip produk</h2><div class="principles"><div class="card"><b>Netral</b><span>Edukasi tidak menjanjikan keuntungan.</span></div><div class="card"><b>Risiko dijelaskan</b><span>Bahasa sederhana, termasuk skenario yang kurang menyenangkan.</span></div><div class="card"><b>Tanpa rekomendasi</b><span>Tidak ada saran beli atau jual otomatis.</span></div><div class="card"><b>Data transparan</b><span>Setiap harga diberi status dan waktu pembaruan.</span></div></div></section>'+
+  '<section class="section" id="status"><h2>Status data</h2><div class="legend"><div class="card"><span class="badge live">AKTUAL</span><span class="t">Harga dari sumber pasar, ditampilkan bersama nama sumber dan waktu pembaruan.</span></div><div class="card"><span class="badge delayed">TERTUNDA</span><span class="t">Data pasar dengan jeda. Di Finvest jedanya mengikuti jadwal pengambilan data, dan waktu data terakhir ditulis di dekat harga.</span></div><div class="card"><span class="badge sim">SIMULASI</span><span class="t">Dibuat generator acak, tanpa hubungan dengan harga pasar.</span></div></div><p class="fine" style="margin-top:10px">'+sourceNote()+'</p></section>';
+}
+
+function panelHtml(i){
+  var id=Store.state.panels[i],a=BY[id],tf=Store.state.tf,c=Market.stats(id,tf).chg;
+  return '<article class="card panel"><div class="panel-h"><label class="sr" for="psel'+i+'">Aset untuk grafik '+(i+1)+'</label><select class="input" id="psel'+i+'" data-change="panel" data-i="'+i+'">'+assetOptions(id)+'</select><span class="num px" data-price="'+id+'">'+esc(fmtPrice(a,Market.price(id)))+'</span>'+pillHtml(c,null,false,id)+'<span class="sp"></span>'+badge(null,id)+'<button class="btn btn-sm" type="button" data-act="open-asset" data-id="'+id+'">Detail</button></div><div class="chart" id="pc'+i+'"></div></article>';
+}
+function watchHtml(){
+  var w=Store.state.watch,tf=Store.state.tf;
+  var items=w.length?w.map(function(id){var a=BY[id],c=Market.stats(id,tf).chg;
+    return '<li><button class="open" type="button" data-act="open-asset" data-id="'+id+'" aria-label="Detail '+esc(a.name)+'"><span class="nm">'+esc(a.name)+'</span><span class="spark" data-spark="'+id+'"></span>'+pillHtml(c,null,false,id)+'<span class="sub num" data-price="'+id+'">'+esc(fmtPrice(a,Market.price(id)))+'</span></button><button class="star" type="button" data-act="unwatch" data-id="'+id+'" aria-label="Hapus '+esc(a.name)+' dari watchlist" title="Hapus dari watchlist">★</button></li>';}).join(''):'<li class="empty">Watchlist kosong. Tambahkan aset di bawah.</li>';
+  var avail=ASSETS.filter(function(a){return w.indexOf(a.id)<0;});
+  return '<aside class="card aside" aria-label="Watchlist"><h2>Watchlist</h2><p class="hint">Perubahan selama '+TFS[tf].name+' &middot; '+(Market.anyReal()?'Data tertunda':'Simulasi')+'</p><ul class="wl">'+items+'</ul>'+
+   (avail.length?'<div class="wl-add"><label class="sr" for="wladd">Tambah aset</label><select class="input" id="wladd"><option value="">Tambah aset...</option>'+assetOptions(null,w)+'</select><button class="btn btn-sm" type="button" data-act="watch-add">Tambah</button></div>':'')+'</aside>';
+}
+function viewPasar(sub){
+  var s=Store.state,na=s.alerts.filter(function(a){return !a.hit;}).length;
+  var tabs='<nav class="tabs" aria-label="Bagian pasar"><a href="#pasar" '+(!sub?'aria-current="page"':'')+'>Dashboard</a><a href="#pasar-bandingkan" '+(sub==='bandingkan'?'aria-current="page"':'')+'>Bandingkan</a><a href="#pasar-alert" '+(sub==='alert'?'aria-current="page"':'')+'>Alert<span class="cnt">'+na+'</span></a></nav>';
+  var head='<div class="page-head"><div><h1>Pasar</h1><p>Pantau beberapa instrumen sekaligus. '+(Market.anyReal()?'Harga berupa data tertunda, bukan real-time.':'Semua harga di sini simulasi.')+'</p></div>'+stamp()+'</div>';
+  var main='';
+  if(sub==='bandingkan'){
+    var chips=ASSETS.map(function(a,k){var on=s.compare.indexOf(a.id)>=0,idx=s.compare.indexOf(a.id);return '<button class="chip" type="button" data-act="cmp" data-id="'+a.id+'" aria-pressed="'+on+'">'+(on?'<i style="background:var(--s'+(idx+1)+')"></i>':'')+esc(a.name)+'</button>';}).join('');
+    main='<div class="mbar">'+tfSeg()+'</div><div class="card" style="padding:16px"><p class="lab" style="margin-bottom:8px">Pilih 2 sampai 4 aset</p><div class="cmpchips">'+chips+'</div><div class="chart" id="cmpChart" style="height:340px"></div><p class="fine">Semua aset dinormalkan ke 100 di awal periode, sehingga yang dibandingkan adalah persentase perubahan, bukan harga.</p><div class="tblwrap"><table><thead><tr><th>Aset</th><th class="r">Perubahan</th><th class="r">Rentang tertinggi-terendah</th><th class="r">Penurunan maks.</th><th class="r">Volatilitas tahunan</th></tr></thead><tbody id="cmpBody"></tbody></table></div></div>';
+    main='<div>'+main+'</div>';
+  }else if(sub==='alert'){
+    var opts=assetOptions('IHSG');
+    var list=s.alerts.length?s.alerts.slice().reverse().map(function(al){var a=BY[al.id];
+      return '<li class="card"><div class="grow"><b>'+esc(a.name)+'</b> '+(al.dir==='above'?'naik ke atau di atas':'turun ke atau di bawah')+' <span class="num">'+esc(fmtPrice(a,al.price))+'</span><div class="fine">'+(al.hit?'Tercapai '+fmtDateTime(al.hit)+' di '+esc(fmtPrice(a,al.hitPrice))+' (data '+statusLong(al.id)+')':'Menunggu. Harga sekarang <span class="num" data-price="'+al.id+'">'+esc(fmtPrice(a,Market.price(al.id)))+'</span>')+'</div></div>'+(al.hit?'<span class="badge live">TERCAPAI</span>':'<span class="badge delayed">AKTIF</span>')+'<button class="btn btn-sm" type="button" data-act="alert-del" data-aid="'+al.aid+'">Hapus</button></li>';}).join(''):'<li class="card empty">Belum ada alert. Buat satu di atas.</li>';
+    main='<div><form class="card alertform" id="alertForm" data-act-submit="alert"><div class="field"><label for="aa">Aset</label><select class="input" id="aa" data-change="alert-asset">'+opts+'</select></div><div class="field"><label for="ad">Kondisi</label><select class="input" id="ad"><option value="above">Naik ke atau di atas</option><option value="below">Turun ke atau di bawah</option></select></div><div class="field"><label for="ap">Harga target</label><input class="input num" id="ap" type="number" inputmode="decimal" step="any" min="0"></div><button class="btn btn-primary" type="submit">Pasang alert</button><p class="fine" style="grid-column:1/-1">Harga terakhir <span class="num" id="acur"></span>. Alert hanya diperiksa saat halaman ini terbuka dan mengikuti data terbaru yang termuat. Alert adalah pengingat harga, bukan saran beli atau jual.</p></form><ul class="alist">'+list+'</ul></div>';
+  }else{
+    var n=s.layout,pans='';for(var i=0;i<n;i++)pans+=panelHtml(i);
+    main='<div><div class="mbar">'+tfSeg()+'<span class="grow"></span><div class="seg" role="group" aria-label="Jumlah grafik">'+[1,2,4].map(function(k){return '<button type="button" data-act="layout" data-v="'+k+'" aria-pressed="'+(k===n)+'" title="'+k+' grafik">'+k+' grafik</button>';}).join('')+'</div></div><div class="panels" data-layout="'+n+'">'+pans+'</div></div>';
+  }
+  return head+tabs+'<div class="mkt">'+main+watchHtml()+'</div>';
+}
+function cmpRows(){
+  var tf=Store.state.tf,ids=Store.state.compare;
+  return ids.map(function(id,k){var a=BY[id],st=Market.stats(id,tf);
+    return '<tr><td><i style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--s'+(k+1)+');margin-right:8px"></i><b>'+esc(a.name)+'</b></td><td class="r num">'+pct(st.chg)+'</td><td class="r num">'+nf((st.hi/st.lo-1)*100,1)+'%</td><td class="r num">'+pct(st.mdd,1)+'</td><td class="r num">'+nf(Market.vol(id),1)+'%</td></tr>';}).join('');
+}
+function cmpCfg(){
+  var tf=Store.state.tf,ids=Store.state.compare,al=alignSeries(ids,tf),tag=cmpTag(ids);
+  var ser=al.cols.map(function(c,k){var b=c[0];return {v:c.map(function(x){return x/b*100;}),color:'var(--s'+(k+1)+')',width:2};});
+  return {series:ser,axis:'left',baseline:100,label:'Perbandingan performa aset, dinormalkan ke 100 ('+TFS[tf].name+', '+tag.toLowerCase()+')',
+    endLabels:ids.map(function(id,k){return BY[id].name+' '+pct(ser[k].v[ser[k].v.length-1]-100,1);}),
+    yFmt:function(t){return nf(t,0);},xLabel:function(i){return fmtDate(al.t[i]);},
+    tip:function(i){return '<span>'+esc(al.intraday?fmtDateTime(al.t[i]):fmtDate(al.t[i]))+'</span>'+ids.map(function(id,k){return '<b style="color:var(--s'+(k+1)+')">'+esc(BY[id].name)+' '+pct(ser[k].v[i]-100,1)+'</b>';}).join('')+'<em>'+tag+'</em>';}};
+}
+
+function viewBelajar(sub){
+  var idx=Math.max(0,LESSONS.findIndex(function(l){return l.id===sub;})),L=LESSONS[idx],done=Store.state.done;
+  var nav=LESSONS.map(function(l,k){var d=done.indexOf(l.id)>=0;return '<a href="#belajar-'+l.id+'" class="'+(d?'done':'')+'" '+(k===idx?'aria-current="page"':'')+'><span class="n">'+(d?'✓':(k+1))+'</span><span>'+esc(l.title)+'</span><span class="m">'+l.mins+' mnt</span></a>';}).join('');
+  var quiz=L.quiz.map(function(q,qi){return '<fieldset data-q="'+qi+'"><legend>'+esc(q.q)+'</legend>'+q.o.map(function(o,oi){return '<label><input type="radio" name="q'+qi+'" value="'+oi+'"><span>'+esc(o)+'</span></label>';}).join('')+'<div class="fb" hidden></div></fieldset>';}).join('');
+  var isDone=done.indexOf(L.id)>=0,prev=LESSONS[idx-1],next=LESSONS[idx+1];
+  return '<div class="page-head"><div><h1>Belajar</h1><p>Tujuh modul pendek, urut dari dasar. Semua contoh angka bersifat ilustrasi.</p></div></div><div class="learn"><div class="lnav-wrap"><h2>Modul</h2><div class="prog" role="progressbar" aria-valuemin="0" aria-valuemax="'+LESSONS.length+'" aria-valuenow="'+done.length+'" aria-label="Progres belajar"><i style="width:'+(done.length/LESSONS.length*100)+'%"></i></div><p class="fine" style="margin:-4px 0 10px">'+done.length+' dari '+LESSONS.length+' modul selesai</p><nav class="lnav" aria-label="Daftar modul">'+nav+'</nav></div>'+
+   '<article class="card lesson"><p class="eyebrow">Modul '+(idx+1)+' &middot; '+L.mins+' menit baca</p><h1>'+esc(L.title)+'</h1><p class="blurb">'+esc(L.blurb)+'</p><div class="prose">'+L.body+'</div>'+
+   '<div class="points"><h3>Poin penting</h3><ul>'+L.points.map(function(p){return '<li>'+esc(p)+'</li>';}).join('')+'</ul></div>'+
+   '<section class="quiz"><h3>Cek pemahaman</h3>'+quiz+'<div class="row"><button class="btn btn-primary" type="button" data-act="quiz-check">Periksa jawaban</button><span id="quizres" aria-live="polite" class="fine"></span></div></section>'+
+   '<div class="lfoot"><div class="row">'+(prev?'<a class="btn" href="#belajar-'+prev.id+'">← '+esc(prev.title)+'</a>':'')+(next?'<a class="btn" href="#belajar-'+next.id+'">'+esc(next.title)+' →</a>':'<a class="btn" href="#simulasi">Coba simulator →</a>')+'</div><button class="btn '+(isDone?'':'btn-primary')+'" type="button" data-act="lesson-done" data-id="'+L.id+'">'+(isDone?'✓ Selesai (klik untuk batalkan)':'Tandai selesai')+'</button></div></article></div>';
+}
+function viewSimulasi(){
+  var p=Sim.params();
+  return '<div class="page-head"><div><h1>Simulator tabungan investasi</h1><p>Lihat rentang hasil yang mungkin dari setoran rutin, berdasarkan asumsi yang Anda atur sendiri. Bukan prediksi.</p></div>'+badge('sim')+'</div><div class="simgrid"><form class="card params" id="simform" onsubmit="return false"><h2>Asumsi</h2>'+
+   '<div class="field"><label for="si">Modal awal (Rp)</label><input class="input num" id="si" type="number" inputmode="numeric" min="0" step="500000" value="'+p.initial+'"></div>'+
+   '<div class="field"><label for="sm">Setoran bulanan (Rp)</label><input class="input num" id="sm" type="number" inputmode="numeric" min="0" step="100000" value="'+p.monthly+'"></div>'+
+   '<div class="field"><div class="rangeval"><label for="sy">Jangka waktu</label><b id="syv"></b></div><input type="range" id="sy" min="1" max="30" step="1" value="'+p.years+'"></div>'+
+   '<div class="field"><label for="sp">Profil contoh</label><select class="input" id="sp">'+Object.keys(PROFILES).map(function(k){return '<option value="'+k+'"'+(k===p.profile?' selected':'')+'>'+esc(PROFILES[k].name)+'</option>';}).join('')+'</select></div>'+
+   '<div class="field"><div class="rangeval"><label for="smu">Asumsi hasil per tahun</label><b id="smuv"></b></div><input type="range" id="smu" min="-5" max="20" step="0.5" value="'+p.mu+'"></div>'+
+   '<div class="field"><div class="rangeval"><label for="sv">Volatilitas per tahun</label><b id="svv"></b></div><input type="range" id="sv" min="0" max="80" step="1" value="'+p.vol+'"></div>'+
+   '<button class="btn" type="button" data-act="sim-reseed">Acak ulang skenario</button><p class="fine">Angka profil adalah asumsi contoh, bukan data historis dan bukan perkiraan hasil produk apa pun. Ubah slider untuk melihat dampaknya.</p></form>'+
+   '<section class="card results" aria-label="Hasil simulasi"><h2 style="font-size:1.1rem">Sebaran hasil</h2><div id="simout" style="display:flex;flex-direction:column;gap:16px"></div></section></div>';
+}
+
+/* =====================================================================
+   Detail sheet
+   ===================================================================== */
+var Sheet={
+  id:null,ma:false,opener:null,
+  open:function(id){this.id=id;this.opener=document.activeElement;this.render();document.body.classList.add('noscroll');},
+  close:function(){
+    this.id=null;$('#overlay').innerHTML='';document.body.classList.remove('noscroll');Charts.clearPage();
+    if(this.opener&&this.opener.focus&&this.opener.isConnected)this.opener.focus();
+  },
+  render:function(){
+    var id=this.id;if(!id)return;
+    var a=BY[id],tf=Store.state.tf,st=Market.stats(id,tf),watched=Store.state.watch.indexOf(id)>=0;
+    var prev=$('.sheet-panel'),top=prev?prev.scrollTop:0;
+    var als=Store.state.alerts.filter(function(x){return x.id===id;});
+    var alist=als.length?'<ul class="alist" style="margin:0">'+als.slice().reverse().map(function(al){return '<li class="card" style="padding:8px 12px"><span class="grow">'+(al.dir==='above'?'≥ ':'≤ ')+'<span class="num">'+esc(fmtPrice(a,al.price))+'</span> <span class="fine">'+(al.hit?'tercapai':'aktif')+'</span></span><button class="btn btn-sm" type="button" data-act="alert-del" data-aid="'+al.aid+'">Hapus</button></li>';}).join('')+'</ul>':'';
+    var pips='';for(var k=1;k<=5;k++)pips+='<i class="'+(k<=a.risk?'on':'')+'"></i>';
+    $('#overlay').innerHTML='<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle"><div class="sheet-bg" data-act="sheet-close"></div><div class="sheet-panel">'+
+     '<div class="sh-h"><div><div class="meta"><span>'+esc(a.cls)+'</span>'+badge(null,id)+'</div><h2 id="sheetTitle">'+esc(a.name)+'</h2><p class="fine">'+esc(a.full)+'</p></div><button class="iconbtn" type="button" data-act="sheet-close" id="sheetClose" aria-label="Tutup detail"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>'+
+     '<div class="sh-px"><span class="num" data-price="'+id+'">'+esc(fmtPrice(a,Market.price(id)))+'</span>'+pillHtml(st.chg,null,true,id)+'<span class="fine">'+TFS[tf].name+'</span></div>'+
+     '<div class="row" style="justify-content:space-between">'+tfSeg()+'<label class="check"><input type="checkbox" data-change="sheet-ma"'+(this.ma?' checked':'')+'> Rata-rata bergerak 20</label></div>'+
+     '<div class="card" style="padding:10px 10px 4px"><div class="chart" id="sheetChart" style="height:280px"></div></div>'+
+     '<div class="stats"><div><span>Tertinggi</span><b>'+esc(fmtPrice(a,st.hi))+'</b></div><div><span>Terendah</span><b>'+esc(fmtPrice(a,st.lo))+'</b></div><div><span>Awal periode</span><b>'+esc(fmtPrice(a,st.first))+'</b></div><div><span>Penurunan maks.</span><b>'+pct(st.mdd,1)+'</b></div><div><span>Volatilitas tahunan</span><b>'+nf(Market.vol(id),1)+'%</b></div><div><span>Data per</span><b>'+esc(fmtDateTime(Market.asOf(id)))+'</b></div></div>'+
+     '<section class="card block"><h3>Tentang aset ini</h3><p>'+esc(a.desc)+'</p><div class="risk"><span class="pips" aria-hidden="true">'+pips+'</span><span><b>Tingkat risiko umum: '+RISK[a.risk]+'</b> <span class="fine">(gambaran kasar, bukan penilaian produk)</span></span></div><p>'+esc(a.risks)+'</p><p class="fine">'+esc(Market.note(id))+'</p></section>'+
+     '<div class="row"><button class="btn" type="button" data-act="'+(watched?'unwatch':'watch')+'" data-id="'+id+'">'+(watched?'★ Hapus dari watchlist':'☆ Tambah ke watchlist')+'</button><button class="btn" type="button" data-act="to-dash" data-id="'+id+'">Tampilkan di dashboard</button><a class="btn" href="#belajar-'+a.mod+'" data-act="sheet-close">Pelajari konsepnya</a></div>'+
+     '<section class="card block"><h3>Alert harga</h3><form id="sheetAlert" class="row" style="align-items:end"><div class="field" style="flex:1;min-width:130px"><label for="sad">Kondisi</label><select class="input" id="sad"><option value="above">Naik ke atau di atas</option><option value="below">Turun ke atau di bawah</option></select></div><div class="field" style="flex:1;min-width:120px"><label for="sap">Harga target</label><input class="input num" id="sap" type="number" inputmode="decimal" step="any" min="0" placeholder="'+esc(nf(Market.price(id),a.dec))+'"></div><button class="btn btn-primary" type="submit">Pasang</button></form>'+alist+'</section>'+
+     '<p class="fine">Informasi umum untuk belajar. Bukan saran membeli atau menjual.</p></div></div>';
+    var panel=$('.sheet-panel');panel.scrollTop=top;
+    var self=this;
+    Charts.mount($('#sheetChart'),function(){return priceCfg(id,Store.state.tf,{ma:self.ma?[20]:[]});});
+    var f=$('#sheetAlert');f.addEventListener('submit',function(e){e.preventDefault();addAlert(id,$('#sad').value,$('#sap').value);});
+    if(!prev)$('#sheetClose').focus();
+  }
+};
+
+/* =====================================================================
+   Alerts, watchlist, actions
+   ===================================================================== */
+function addAlert(id,dir,val){
+  var a=BY[id],price=Number(val),cur=Market.price(id);
+  if(!isFinite(price)||price<=0){toast('Isi harga target dengan angka lebih dari 0.');return false;}
+  if(dir==='above'&&price<=cur){toast('Untuk alert naik, harga target harus di atas harga sekarang ('+fmtPrice(a,cur)+').');return false;}
+  if(dir==='below'&&price>=cur){toast('Untuk alert turun, harga target harus di bawah harga sekarang ('+fmtPrice(a,cur)+').');return false;}
+  Store.state.alerts.push({aid:Date.now()+'-'+Math.floor(Math.random()*1e4),id:id,dir:dir,price:price,hit:null});
+  Store.save();toast('Alert dipasang untuk '+a.name+'.');rerender(true);return true;
+}
+function checkAlerts(){
+  var changed=false;
+  Store.state.alerts.forEach(function(al){
+    if(al.hit)return;
+    var p=Market.price(al.id),a=BY[al.id];
+    if((al.dir==='above'&&p>=al.price)||(al.dir==='below'&&p<=al.price)){
+      al.hit=Date.now();al.hitPrice=p;changed=true;
+      toast('Alert: '+a.name+' menyentuh '+fmtPrice(a,al.price)+' (data '+statusLong(al.id)+').','alert');
+    }
+  });
+  if(changed){Store.save();rerender(true);}
+}
+function setTf(tf){Store.state.tf=tf;Store.save();rerender(true);}
+function toggleWatch(id,on){
+  var w=Store.state.watch,i=w.indexOf(id);
+  if(on&&i<0)w.push(id);if(!on&&i>=0)w.splice(i,1);
+  Store.save();rerender(true);
+}
+
+/* =====================================================================
+   Router + render
+   ===================================================================== */
+function parseHash(){
+  var h=(location.hash||'#beranda').slice(1),parts=h.split('-'),page=parts.shift(),sub=parts.join('-');
+  if(['beranda','pasar','belajar','simulasi'].indexOf(page)<0){page='beranda';sub='';}
+  return {page:page,sub:sub};
+}
+function render(keepScroll){
+  var r=parseHash(),view=$('#view'),y=window.scrollY;
+  Charts.clearPage();
+  var html='';
+  if(r.page==='beranda')html=viewBeranda();
+  else if(r.page==='pasar')html=viewPasar(r.sub);
+  else if(r.page==='belajar')html=viewBelajar(r.sub);
+  else html=viewSimulasi();
+  view.innerHTML=html;
+  $$('#nav a,#tabbar a').forEach(function(a){if(a.dataset.p===r.page)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});
+  mountSparks(view);
+  if(r.page==='beranda'){Charts.mount($('#heroChart'),function(){return priceCfg('IHSG','3B');});}
+  if(r.page==='pasar'){
+    if(r.sub==='bandingkan'){var cc=$('#cmpChart');Charts.mount(cc,cmpCfg);$('#cmpBody').innerHTML=cmpRows();}
+    else if(r.sub==='alert'){syncAlertForm();}
+    else{for(var i=0;i<Store.state.layout;i++)(function(i){Charts.mount($('#pc'+i),function(){return priceCfg(Store.state.panels[i],Store.state.tf);});})(i);}
+  }
+  if(r.page==='belajar'){$$('[data-widget]',view).forEach(function(h){h.className='widget';Widgets[h.dataset.widget](h);});}
+  if(r.page==='simulasi'){Sim.update();}
+  if(Sheet.id)Sheet.render();
+  if(keepScroll)window.scrollTo(0,y);else{window.scrollTo(0,0);}
+}
+function rerender(keep){render(keep);}
+function syncAlertForm(){
+  var sel=$('#aa'),ap=$('#ap'),cur=$('#acur');if(!sel)return;
+  var a=BY[sel.value];cur.textContent=fmtPrice(a,Market.price(a.id));ap.placeholder=nf(Market.price(a.id),a.dec);
+}
+
+/* live updates */
+function updateLive(){
+  $$('[data-price]').forEach(function(el){var a=BY[el.dataset.price];if(a)el.textContent=fmtPrice(a,Market.price(a.id));});
+  $$('[data-chg]').forEach(function(el){
+    var id=el.dataset.chg,tf=el.dataset.tf||Store.state.tf,c=Market.stats(id,tf).chg;
+    el.textContent=(c>0.005?'▲ ':c<-0.005?'▼ ':'– ')+pct(c);
+    el.classList.remove('up','down');if(c>0.005)el.classList.add('up');else if(c<-0.005)el.classList.add('down');
+  });
+  $$('[data-clock]').forEach(function(el){el.textContent=fmtClock(SimProvider.last);});
+  var cb=$('#cmpBody');if(cb)cb.innerHTML=cmpRows();
+  Charts.redrawAll(true);
+  checkAlerts();
+}
+
+/* =====================================================================
+   Events
+   ===================================================================== */
+document.addEventListener('click',function(e){
+  var t=e.target.closest('[data-act]');if(!t)return;
+  var act=t.dataset.act,id=t.dataset.id;
+  switch(act){
+    case 'theme':{
+      var de=document.documentElement,cur=de.dataset.theme||(window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'),nx=cur==='dark'?'light':'dark';
+      de.dataset.theme=nx;Store.state.theme=nx;Store.save();break;}
+    case 'open-asset':Sheet.open(id);break;
+    case 'sheet-close':Sheet.close();break;
+    case 'tf':setTf(t.dataset.v);break;
+    case 'layout':Store.state.layout=Number(t.dataset.v);Store.save();rerender(true);break;
+    case 'watch':toggleWatch(id,true);toast('Ditambahkan ke watchlist.');break;
+    case 'unwatch':toggleWatch(id,false);break;
+    case 'watch-add':{var s=$('#wladd');if(s&&s.value)toggleWatch(s.value,true);break;}
+    case 'to-dash':{Store.state.panels[0]=id;Store.save();Sheet.close();if(parseHash().page==='pasar'&&!parseHash().sub)rerender(true);else location.hash='#pasar';break;}
+    case 'cmp':{var c=Store.state.compare,i=c.indexOf(id);if(i>=0){if(c.length<=2){toast('Minimal 2 aset untuk dibandingkan.');break;}c.splice(i,1);}else{if(c.length>=4){toast('Maksimal 4 aset.');break;}c.push(id);}Store.save();rerender(true);break;}
+    case 'alert-del':Store.state.alerts=Store.state.alerts.filter(function(a){return a.aid!==t.dataset.aid;});Store.save();rerender(true);break;
+    case 'pause':paused=!paused;t.textContent=paused?'Lanjutkan simulasi':'Jeda simulasi';break;
+    case 'lesson-done':{var d=Store.state.done,k=d.indexOf(id);if(k>=0)d.splice(k,1);else d.push(id);Store.save();rerender(true);break;}
+    case 'quiz-check':{
+      var r=parseHash(),L=LBY[r.sub]||LESSONS[0],ok=0,all=true;
+      $$('.quiz fieldset').forEach(function(fs,qi){
+        var q=L.quiz[qi],sel=fs.querySelector('input:checked'),fb=fs.querySelector('.fb');
+        if(!sel){all=false;return;}
+        var good=Number(sel.value)===q.a;if(good)ok++;
+        fb.hidden=false;fb.className='fb '+(good?'ok':'no');fb.textContent=(good?'Tepat. ':'Belum tepat. Jawaban yang lebih sesuai: '+q.o[q.a]+'. ')+q.why;
+      });
+      $('#quizres').textContent=all?('Skor '+ok+' dari '+L.quiz.length+'.'):'Jawab semua pertanyaan dulu.';break;}
+    case 'sim-reseed':Sim.seed=Math.floor(Math.random()*1e6);Sim.update();break;
+    default:break;
+  }
+});
+document.addEventListener('change',function(e){
+  var t=e.target;
+  if(t.dataset.change==='panel'){Store.state.panels[Number(t.dataset.i)]=t.value;Store.save();rerender(true);}
+  else if(t.dataset.change==='sheet-ma'){Sheet.ma=t.checked;Sheet.render();}
+  else if(t.dataset.change==='alert-asset'){syncAlertForm();}
+  else if(t.id==='sp'){var pr=PROFILES[t.value];if(pr){$('#smu').value=pr.mu;$('#sv').value=pr.vol;Sim.update();}}
+});
+document.addEventListener('input',function(e){
+  var t=e.target;if(t.closest&&t.closest('#simform')&&t.id!=='sp'){if(t.id==='smu'||t.id==='sv'){var sp=$('#sp');var pr=PROFILES[sp.value];if(pr&&(Number($('#smu').value)!==pr.mu||Number($('#sv').value)!==pr.vol)){/* custom assumptions stay selected profile as a starting point */}}Sim.update();}
+});
+document.addEventListener('submit',function(e){
+  if(e.target.id==='alertForm'){e.preventDefault();addAlert($('#aa').value,$('#ad').value,$('#ap').value);}
+});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&Sheet.id)Sheet.close();});
+window.addEventListener('hashchange',function(){if(Sheet.id)Sheet.close();render(false);});
+var lastW=0,rafId=0;
+window.addEventListener('resize',function(){if(rafId)return;rafId=requestAnimationFrame(function(){rafId=0;var w=document.body.clientWidth;if(w!==lastW){lastW=w;Charts.redrawAll(false);}});});
+
+/* =====================================================================
+   Boot
+   ===================================================================== */
+Store.load();
+(function sanitize(){
+  var s=Store.state,ok=function(id){return !!BY[id];};
+  s.watch=(Array.isArray(s.watch)?s.watch:[]).filter(ok);
+  s.panels=(Array.isArray(s.panels)?s.panels:[]).filter(ok);
+  var def=['IHSG','BBCA','EMAS','BTC'];while(s.panels.length<4)s.panels.push(def[s.panels.length]);
+  s.compare=(Array.isArray(s.compare)?s.compare:[]).filter(ok).slice(0,4);if(s.compare.length<2)s.compare=['IHSG','EMAS','BTC'];
+  s.alerts=(Array.isArray(s.alerts)?s.alerts:[]).filter(function(a){return a&&ok(a.id)&&isFinite(a.price)&&a.aid;});
+  s.done=(Array.isArray(s.done)?s.done:[]).filter(function(id){return !!LBY[id];});
+  if(!TFS[s.tf])s.tf='1B';if([1,2,4].indexOf(s.layout)<0)s.layout=2;
+  if(s.sim){var p=s.sim;if(!PROFILES[p.profile]||!isFinite(p.initial)||!isFinite(p.monthly)||!(p.years>=1&&p.years<=30)||!isFinite(p.mu)||!isFinite(p.vol))s.sim=null;}
+  if(s.theme==='dark'||s.theme==='light')document.documentElement.dataset.theme=s.theme;
+})();
+SimProvider.init();
+renderSimbar();
+render(false);
+lastW=document.body.clientWidth;
+Market.load().then(function(ok){if(ok){renderSimbar();rerender(true);}});
+setInterval(function(){
+  if(document.hidden)return;
+  var g=Market.gen;
+  Market.load().then(function(ok){if(ok&&Market.gen!==g){renderSimbar();rerender(true);toast('Data pasar diperbarui.');}});
+},600000);
+setInterval(function(){if(paused||document.hidden)return;SimProvider.tick();updateLive();},3000);
+})();
+</script>
