@@ -1,9 +1,17 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Finvest: belajar investasi dari nol dan pantau pasar dengan data tertunda. Bukan saran beli atau jual.">
 <title>Finvest</title>
-<meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..700&family=Figtree:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
+html{-webkit-text-size-adjust:100%;color-scheme:light}
+[hidden]{display:none!important}
+img{max-width:100%}
 /* Layout concept: chart-first workspace. Beranda opens with a live simulated chart beside two entry paths
    (pemula / berpengalaman). Pasar is a customizable multi-chart grid with a watchlist rail.
    Every price carries its data-status badge (Aktual / Tertunda / Simulasi). */
@@ -332,7 +340,8 @@ footer.site{margin-top:56px;padding-top:20px;border-top:1px solid var(--line);co
   .panels[data-layout="1"] .chart{height:300px}
 }
 </style>
-
+</head>
+<body>
 <header class="top">
   <div class="wrap">
     <div class="top-row">
@@ -1214,3 +1223,5 @@ setInterval(function(){
 setInterval(function(){if(paused||document.hidden)return;SimProvider.tick();updateLive();},3000);
 })();
 </script>
+</body>
+</html>
