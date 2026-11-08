@@ -1,0 +1,38 @@
+name: Perbarui data pasar
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-market
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Ambil data harga
+        run: node scripts/fetch-market.mjs
+
+      - name: Simpan jika ada perubahan
+        run: |
+          if git diff --quiet -- data/market.json; then
+            echo "Tidak ada perubahan."
+            exit 0
+          fi
+          git config user.name "finvest-bot"
+          git config user.email "finvest-bot@users.noreply.github.com"
+          git add data/market.json
+          git commit -m "Perbarui data pasar"
+          git push
