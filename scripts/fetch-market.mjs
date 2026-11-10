@@ -19,7 +19,21 @@ const SYMBOLS = {
   BTC: 'BTC-USD',
   ETH: 'ETH-USD',
   USDIDR: 'USDIDR=X',
-  SPX: '^GSPC'
+  SPX: '^GSPC',
+  // saham Indonesia
+  BMRI: 'BMRI.JK', BBNI: 'BBNI.JK', BRIS: 'BRIS.JK', GOTO: 'GOTO.JK', UNVR: 'UNVR.JK', ICBP: 'ICBP.JK',
+  INDF: 'INDF.JK', KLBF: 'KLBF.JK', AMRT: 'AMRT.JK', CPIN: 'CPIN.JK', ANTM: 'ANTM.JK', ADRO: 'ADRO.JK',
+  PTBA: 'PTBA.JK', MDKA: 'MDKA.JK', TOWR: 'TOWR.JK', EXCL: 'EXCL.JK', SMGR: 'SMGR.JK', PGAS: 'PGAS.JK',
+  // saham AS
+  AAPL: 'AAPL', MSFT: 'MSFT', NVDA: 'NVDA', GOOGL: 'GOOGL', AMZN: 'AMZN', META: 'META', TSLA: 'TSLA', JPM: 'JPM', KO: 'KO',
+  // indeks
+  NASDAQ: '^IXIC', DOW: '^DJI', NIKKEI: '^N225', HSI: '^HSI', FTSE: '^FTSE', STI: '^STI',
+  // kripto
+  BNB: 'BNB-USD', SOL: 'SOL-USD', XRP: 'XRP-USD', DOGE: 'DOGE-USD', ADA: 'ADA-USD',
+  // kurs
+  EURUSD: 'EURUSD=X', EURIDR: 'EURIDR=X', SGDIDR: 'SGDIDR=X', JPYIDR: 'JPYIDR=X',
+  // komoditas (kontrak berjangka, USD)
+  GOLDUSD: 'GC=F', SILVER: 'SI=F', WTI: 'CL=F', BRENT: 'BZ=F', NATGAS: 'NG=F', COPPER: 'HG=F'
 };
 const GOLD_USD_PER_OZ = 'GC=F'; // emas berjangka, USD per troy ounce
 const FX = 'USDIDR=X';
@@ -95,7 +109,7 @@ async function main() {
     } catch (e) {
       failures.push(`${id}: ${e.message}`);
     }
-    await sleep(400);
+    await sleep(300);
   }
 
   // Emas: harga emas dunia (USD/oz) x kurs USD/IDR / gram per ounce. Bukan harga Antam.
