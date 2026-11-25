@@ -33,7 +33,24 @@ const SYMBOLS = {
   // kurs
   EURUSD: 'EURUSD=X', EURIDR: 'EURIDR=X', SGDIDR: 'SGDIDR=X', JPYIDR: 'JPYIDR=X',
   // komoditas (kontrak berjangka, USD)
-  GOLDUSD: 'GC=F', SILVER: 'SI=F', WTI: 'CL=F', BRENT: 'BZ=F', NATGAS: 'NG=F', COPPER: 'HG=F'
+  GOLDUSD: 'GC=F', SILVER: 'SI=F', WTI: 'CL=F', BRENT: 'BZ=F', NATGAS: 'NG=F', COPPER: 'HG=F',
+  PLAT: 'PL=F', PALL: 'PA=F', WHEAT: 'ZW=F', CORN: 'ZC=F', SOY: 'ZS=F', COFFEE: 'KC=F', SUGAR: 'SB=F', COCOA: 'CC=F',
+  // indeks tambahan
+  DAX: '^GDAXI', CAC: '^FCHI', KOSPI: '^KS11', ASX: '^AXJO', SENSEX: '^BSESN', SSEC: '000001.SS', KLCI: '^KLSE', RUT: '^RUT',
+  // saham Indonesia tambahan
+  ARTO: 'ARTO.JK', BUKA: 'BUKA.JK', EMTK: 'EMTK.JK', ITMG: 'ITMG.JK', INCO: 'INCO.JK', INKP: 'INKP.JK', JSMR: 'JSMR.JK',
+  MAPI: 'MAPI.JK', MEDC: 'MEDC.JK', PWON: 'PWON.JK', SIDO: 'SIDO.JK', ACES: 'ACES.JK', BBTN: 'BBTN.JK', MYOR: 'MYOR.JK',
+  // saham AS tambahan
+  NFLX: 'NFLX', AMD: 'AMD', DIS: 'DIS', V: 'V', MA: 'MA', WMT: 'WMT', PG: 'PG', JNJ: 'JNJ', XOM: 'XOM', BAC: 'BAC',
+  NKE: 'NKE', MCD: 'MCD', ORCL: 'ORCL', INTC: 'INTC',
+  // ETF
+  SPY: 'SPY', QQQ: 'QQQ', VTI: 'VTI', VOO: 'VOO', GLD: 'GLD', EEM: 'EEM', TLT: 'TLT',
+  // kripto tambahan
+  AVAX: 'AVAX-USD', DOT: 'DOT-USD', LINK: 'LINK-USD', LTC: 'LTC-USD', TRX: 'TRX-USD', BCH: 'BCH-USD',
+  // kurs tambahan
+  GBPUSD: 'GBPUSD=X', AUDUSD: 'AUDUSD=X', USDJPY: 'JPY=X', GBPIDR: 'GBPIDR=X', AUDIDR: 'AUDIDR=X', CNYIDR: 'CNYIDR=X',
+  // suku bunga dan volatilitas
+  US10Y: '^TNX', US5Y: '^FVX', VIX: '^VIX'
 };
 const GOLD_USD_PER_OZ = 'GC=F'; // emas berjangka, USD per troy ounce
 const FX = 'USDIDR=X';
@@ -41,7 +58,8 @@ const GRAMS_PER_OZ = 31.1035;
 
 const UA = 'Mozilla/5.0 (compatible; FinvestBot/1.0; +https://github.com)';
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-const round = (x) => Math.round(x * 100) / 100;
+// 6 angka signifikan: cukup untuk kurs (1,08346) maupun indeks (7.041,93), dan menjaga berkas tetap kecil
+const round = (x) => Number(x.toPrecision(6));
 
 async function chart(symbol, range, interval) {
   const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=${range}&interval=${interval}&includePrePost=false`;
@@ -55,16 +73,25 @@ async function chart(symbol, range, interval) {
       const ts = r?.timestamp;
       const close = r?.indicators?.quote?.[0]?.close;
       if (!ts || !close) throw new Error('respons tanpa data harga');
+      const q = r.indicators.quote[0];
       const t = [];
       const v = [];
+      const o = [];
+      const hi = [];
+      const lo = [];
       for (let i = 0; i < ts.length; i++) {
         if (close[i] != null && Number.isFinite(close[i])) {
+          const ok = [q.open?.[i], q.high?.[i], q.low?.[i]].every((x) => x != null && Number.isFinite(x));
           t.push(ts[i] * 1000);
           v.push(close[i]);
+          // open/high/low bisa kosong di beberapa baris: pakai harga penutupan
+          o.push(ok ? q.open[i] : close[i]);
+          hi.push(ok ? Math.max(q.high[i], q.open[i], close[i]) : close[i]);
+          lo.push(ok ? Math.min(q.low[i], q.open[i], close[i]) : close[i]);
         }
       }
       if (t.length < 2) throw new Error('data terlalu sedikit');
-      return { t, v };
+      return { t, v, o, h: hi, l: lo };
     } catch (e) {
       lastErr = e;
       await sleep(800 * attempt);
@@ -73,8 +100,16 @@ async function chart(symbol, range, interval) {
   throw new Error(`${symbol} ${range}/${interval}: ${lastErr.message}`);
 }
 
-function pack(series) {
-  return { t: series.t, v: series.v.map(round) };
+// withOhlc: simpan juga open/high/low (dipakai grafik candlestick)
+function pack(series, withOhlc) {
+  // waktu disimpan dalam detik (halaman mengalikannya kembali ke milidetik)
+  const out = { t: series.t.map((ms) => Math.round(ms / 1000)), v: series.v.map(round) };
+  if (withOhlc && series.o) {
+    out.o = series.o.map(round);
+    out.h = series.h.map(round);
+    out.l = series.l.map(round);
+  }
+  return out;
 }
 
 // nilai FX terakhir yang waktunya <= t
@@ -104,7 +139,7 @@ async function main() {
       } catch {
         /* data intraday opsional */
       }
-      assets[id] = i ? { d: pack(d), i: pack(i) } : { d: pack(d) };
+      assets[id] = i ? { d: pack(d, true), i: pack(i) } : { d: pack(d, true) };
       ok++;
     } catch (e) {
       failures.push(`${id}: ${e.message}`);
@@ -118,13 +153,20 @@ async function main() {
     const st = { p: 0 };
     const t = [];
     const v = [];
+    const o = [];
+    const hi = [];
+    const lo = [];
     for (let k = 0; k < gold.t.length; k++) {
       if (gold.t[k] < fx.t[0]) continue;
+      const f = fxAt(fx, gold.t[k], st) / GRAMS_PER_OZ;
       t.push(gold.t[k]);
-      v.push((gold.v[k] * fxAt(fx, gold.t[k], st)) / GRAMS_PER_OZ);
+      v.push(gold.v[k] * f);
+      o.push(gold.o[k] * f);
+      hi.push(gold.h[k] * f);
+      lo.push(gold.l[k] * f);
     }
     if (t.length < 2) throw new Error('data emas terlalu sedikit');
-    assets.EMAS = { d: pack({ t, v }) };
+    assets.EMAS = { d: pack({ t, v, o, h: hi, l: lo }, true) };
     ok++;
   } catch (e) {
     failures.push(`EMAS: ${e.message}`);
