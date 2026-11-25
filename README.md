@@ -9,8 +9,11 @@ Harga berupa **data tertunda**, bukan real-time. Kalau data belum termuat, halam
 2. Skrip mengambil harga harian (1 tahun) dan per jam (7 hari) lalu menulis `data/market.json`.
 3. `index.html` membaca `data/market.json` dan menampilkan statusnya sebagai TERTUNDA, lengkap dengan waktu data terakhir.
 
-Aset: IHSG, BBCA, BBRI, TLKM, ASII, Bitcoin, Ethereum, USD/IDR, S&P 500, dan emas.
+Aset (sekitar 120): indeks dunia, saham Indonesia dan AS, ETF, kripto, kurs, komoditas, serta imbal hasil dan VIX. Daftar simbol ada di `SYMBOLS` pada `scripts/fetch-market.mjs`. Aset yang gagal diambil tetap tampil sebagai SIMULASI.
+Berkas data menyimpan waktu dalam detik dan harga 6 angka signifikan agar ukurannya kecil. Halaman menerima format lama (milidetik) juga.
 Harga emas dihitung dari emas berjangka dunia (USD per ons) dikali kurs USD/IDR per gram. Ini bukan harga Antam atau toko emas.
+
+Setiap aset punya halaman grafik sendiri (`#aset-KODE`) dengan candlestick, indikator yang bisa dicari, dan alat gambar. Materi belajar terbagi tiga tingkat: Pemula, Menengah, Mahir.
 
 ## Pasang di GitHub Pages
 
