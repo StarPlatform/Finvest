@@ -505,6 +505,7 @@ table.list .fine{margin-top:1px}
 .irow .in{display:flex;flex-direction:column;gap:1px;min-width:0}
 .irow .it{display:flex;gap:8px;align-items:baseline}
 .irow .it i{font-style:normal;font-size:11px;color:var(--ink-3);border:1px solid var(--line);border-radius:4px;padding:0 5px}
+.ipar{display:flex;gap:8px;align-items:end;flex-wrap:wrap;padding:0 10px 10px 34px}
 .irow .fine{font-size:12px;line-height:1.4}
 .risk{display:flex;align-items:center;gap:10px;font-size:13.5px}
 /* skeleton loading */
@@ -1806,6 +1807,9 @@ function fracIdx(t,tt){
    Asset page: a full chart workspace for one instrument
    ===================================================================== */
 var ICON={
+  zin:'<circle cx="9" cy="9" r="5.5"/><path d="M13.5 13.5L17 17M9 6.8v4.4M6.8 9h4.4"/>',
+  zout:'<circle cx="9" cy="9" r="5.5"/><path d="M13.5 13.5L17 17M6.8 9h4.4"/>',
+  zreset:'<path d="M4 8V4h4M16 8V4h-4M4 12v4h4M16 12v4h-4"/>',
   cursor:'<path d="M5 3l11 6-4.6 1.6L9.6 16z"/>',
   t:'<path d="M4 16L16 4"/><circle cx="4" cy="16" r="1.8"/><circle cx="16" cy="4" r="1.8"/>',
   r:'<path d="M4 16l7-5.5"/><path d="M13 9l4-3" stroke-dasharray="2 2"/><circle cx="4" cy="16" r="1.8"/><circle cx="11" cy="10.5" r="1.8"/>',
@@ -1819,7 +1823,7 @@ var ICON={
 };
 var FIBL=[0,.236,.382,.5,.618,.786,1],FIBC=['#7A8194','#E5484D','#E08A00','#2F9E6A','#0E9F8E','#2AA7C9','#7A8194'];
 var AP={
-  host:null,ro:null,tool:'cursor',pend:null,meas:null,geo:null,id:null,
+  host:null,ro:null,tool:'cursor',pend:null,meas:null,geo:null,id:null,vc:null,ve:null,pz:1,po:0,N0:0,ptrs:null,drag:null,
   cfg:function(){
     var s=Store.state,c=s.chart;
     if(!c||typeof c!=='object')c=s.chart={};
@@ -1844,11 +1848,15 @@ var AP={
     var nd=this.drawings().length;
     return T.map(function(t){return '<button type="button" class="dt" data-ap="tool" data-v="'+t[0]+'" aria-pressed="'+(self.tool===t[0])+'" title="'+esc(t[1])+'" aria-label="'+esc(t[1])+'">'+ic(t[0])+'</button>';}).join('')+
       '<span class="dsep" aria-hidden="true"></span>'+
+      '<button type="button" class="dt" data-ap="zin" title="'+X('Zoom in','Perbesar')+'" aria-label="'+X('Zoom in','Perbesar')+'">'+ic('zin')+'</button>'+
+      '<button type="button" class="dt" data-ap="zout" title="'+X('Zoom out','Perkecil')+'" aria-label="'+X('Zoom out','Perkecil')+'"'+(this.vc==null?' disabled':'')+'>'+ic('zout')+'</button>'+
+      '<button type="button" class="dt" data-ap="zreset" title="'+X('Reset zoom and price scale','Atur ulang zoom dan skala harga')+'" aria-label="'+X('Reset zoom and price scale','Atur ulang zoom dan skala harga')+'"'+(this.vc==null&&this.pz===1&&this.po===0?' disabled':'')+'>'+ic('zreset')+'</button>'+
+      '<span class="dsep" aria-hidden="true"></span>'+
       '<button type="button" class="dt" data-ap="undo" title="'+X('Undo last drawing','Urungkan gambar terakhir')+'" aria-label="'+X('Undo last drawing','Urungkan gambar terakhir')+'"'+(nd?'':' disabled')+'>'+ic('undo')+'</button>'+
       '<button type="button" class="dt" data-ap="clear" title="'+X('Remove all drawings','Hapus semua gambar')+'" aria-label="'+X('Remove all drawings','Hapus semua gambar')+'"'+(nd?'':' disabled')+'>'+ic('clear')+'</button>';
   },
   hint:function(){
-    return {cursor:X('Move over the chart to read values. Pick a tool on the left to draw.','Gerakkan kursor di atas grafik untuk membaca nilai. Pilih alat di kiri untuk menggambar.'),
+    return {cursor:X('Drag the chart to pan. Drag or scroll on the price axis (right side) to stretch the price scale, double-click it to reset. Pinch or Ctrl+scroll to zoom time. Pick a drawing tool to draw.','Geser grafik untuk menggulir. Seret atau scroll pada sumbu harga (sisi kanan) untuk meregangkan skala harga, klik dua kali untuk mengatur ulang. Cubit atau Ctrl+scroll untuk zoom waktu. Pilih alat gambar untuk menggambar.'),
       t:X('Trend line: tap two points.','Garis tren: ketuk dua titik.'),r:X('Ray: tap the start, then a second point to set the direction.','Sinar: ketuk titik awal, lalu titik kedua untuk menentukan arah.'),
       h:X('Horizontal line: tap the chart at the price you want.','Garis horizontal: ketuk grafik pada harga yang diinginkan.'),v:X('Vertical line: tap the date you want to mark.','Garis vertikal: ketuk tanggal yang ingin ditandai.'),
       rect:X('Rectangle: tap two opposite corners.','Persegi panjang: ketuk dua sudut yang berseberangan.'),
@@ -1870,7 +1878,11 @@ var AP={
       var sp=IND[k],hay=(sp.n+' '+sp.kw+' '+(sp.o?'overlay on price di atas harga':'pane panel terpisah')).toLowerCase();
       for(var i=0;i<t.length;i++)if(hay.indexOf(t[i])<0)return;
       var on=C.ind.some(function(d){return d.k===k;});
+      var inst=C.ind.filter(function(d){return d.k===k;});
       rows+='<li class="irow"><label><input type="checkbox" data-ap="indtog" data-k="'+k+'"'+(on?' checked':'')+'><span class="in"><span class="it"><b>'+esc(sp.n)+'</b><i>'+(sp.o?X('On price','Di atas harga'):X('Below chart','Di bawah grafik'))+'</i></span><span class="fine">'+esc(X(sp.d[0],sp.d[1]))+'</span></span></label>'+(sp.multi?'<button type="button" class="btn btn-sm" data-ap="indadd" data-k="'+k+'" title="'+X('Add another','Tambah lagi')+'">+</button>':'')+'</li>';
+      inst.forEach(function(d){
+        rows+='<li class="ipar">'+sp.f.map(function(f){return '<label class="pf"><span>'+esc(X(f[1],f[2]))+'</span><input class="input mini num" type="number" data-ap="par" data-iid="'+d.id+'" data-f="'+f[0]+'" value="'+d[f[0]]+'" min="'+f[3]+'" max="'+f[4]+'" step="'+f[5]+'" inputmode="decimal"></label>';}).join('')+'<button class="btn btn-sm" type="button" data-ap="indrm" data-iid="'+d.id+'" aria-label="'+X('Remove indicator','Hapus indikator')+' '+esc(sp.n)+'">'+X('Remove','Hapus')+'</button></li>';
+      });
     });
     return rows||'<li class="cnone"><b>'+X('No indicator found.','Indikator tidak ditemukan.')+'</b><span>'+X('Try RSI, MACD, Bollinger, or moving average.','Coba RSI, MACD, Bollinger, atau rata-rata bergerak.')+'</span></li>';
   },
@@ -1906,8 +1918,7 @@ var AP={
         '<div class="amain"><div class="stlg" id="stLg" aria-live="off"></div><div class="stage" id="stHost"><div class="skel skel-chart" aria-hidden="true"></div></div>'+
         '<p class="fine hint" id="apHint">'+esc(this.hint())+'</p>'+
         '<p class="fine">'+badge(null,id)+' '+(noOhlc?X('Candlesticks need daily open, high, and low data, which is not available for this range, so the chart shows a line instead. ','Candlestick memerlukan data open, high, dan low harian yang tidak tersedia untuk rentang ini, jadi grafik tampil sebagai garis. '):'')+esc(Market.note(id))+'</p></div></div>'+
-      '<div class="acols"><section class="card block"><h2>'+X('Indicators','Indikator')+'</h2><ul class="ilist" id="apChips">'+this.chips()+'</ul><p class="fine">'+X('Indicators are calculations on past prices. They describe what already happened and are not buy or sell signals.','Indikator adalah perhitungan atas harga masa lalu. Indikator menggambarkan yang sudah terjadi dan bukan sinyal beli atau jual.')+'</p></section>'+
-        '<section class="card block"><h2>'+X('Drawings','Gambar')+'</h2><ul class="dlist" id="apDraws">'+this.drawList()+'</ul></section></div>'+
+      '<p class="fine">'+X('Indicators are calculations on past prices. They describe what already happened and are not buy or sell signals.','Indikator adalah perhitungan atas harga masa lalu. Indikator menggambarkan yang sudah terjadi dan bukan sinyal beli atau jual.')+'</p>'+
       '<section class="ainfo"><h2>'+X('Range statistics','Statistik rentang')+' <span class="fine">'+C.rng+'</span></h2><div class="stats"><div><span>'+X('Highest close','Penutupan tertinggi')+'</span><b>'+esc(fmtPrice(a,rs.hi))+'</b></div><div><span>'+X('Lowest close','Penutupan terendah')+'</span><b>'+esc(fmtPrice(a,rs.lo))+'</b></div><div><span>'+X('Start of range','Awal rentang')+'</span><b>'+esc(fmtPrice(a,rs.first))+'</b></div><div><span>'+X('Maximum drawdown','Penurunan maks.')+'</span><b>'+pct(rs.mdd,1)+'</b></div><div><span>'+X('Annual volatility','Volatilitas tahunan')+'</span><b>'+nf(Market.vol(id),1)+'%</b></div><div><span>'+X('Data as of','Data per')+'</span><b>'+esc(fmtDateTime(Market.asOf(id)))+'</b></div></div></section>'+
       '<div class="acols"><section class="card block"><h2>'+X('About this asset','Tentang aset ini')+'</h2><p>'+esc(a.desc)+'</p><div class="risk"><span class="pips" aria-hidden="true">'+pips+'</span><span><b>'+X('General risk level: ','Tingkat risiko umum: ')+RISK[a.risk]+'</b> <span class="fine">'+X('(rough guide, not a product rating)','(gambaran kasar, bukan penilaian produk)')+'</span></span></div><p>'+esc(a.risks)+'</p>'+
         '<div class="row"><a class="btn" href="#belajar-'+a.mod+'">'+X('Learn the concept','Pelajari konsepnya')+'</a><button class="btn" type="button" data-act="to-dash" data-id="'+id+'">'+X('Show on dashboard','Tampilkan di dasbor')+'</button></div></section>'+
@@ -1915,7 +1926,7 @@ var AP={
       '<p class="fine">'+X('General information for learning. Not advice to buy or sell.','Informasi umum untuk belajar. Bukan saran membeli atau menjual.')+'</p></div>';
   },
   mount:function(id){
-    var self=this,root=$('#apage');this.id=id;this.pend=null;this.meas=null;this.geo=null;this.host=$('#stHost');
+    var self=this,root=$('#apage');this.id=id;this.pend=null;this.meas=null;this.geo=null;this.vc=null;this.ve=null;this.pz=1;this.po=0;this.ptrs={};this.drag=null;this.host=$('#stHost');
     if(this.ro){this.ro.disconnect();this.ro=null;}
     if(!root||!this.host)return;
     var q=$('#indq'),res=$('#indres');
@@ -1931,13 +1942,77 @@ var AP={
     root.addEventListener('change',function(e){var t=e.target.closest('[data-ap="indtog"]');if(t)self.toggleInd(t.dataset.k,t.checked,t);});
     root.addEventListener('input',function(e){var t=e.target.closest('[data-ap="par"]');if(t)self.setPar(t);});
     $('#apAlert').addEventListener('submit',function(e){e.preventDefault();addAlert(id,$('#sad').value,$('#sap').value);});
-    this.host.addEventListener('pointermove',function(e){self.move(e);});
-    this.host.addEventListener('pointerdown',function(e){self.move(e);});
-    this.host.addEventListener('pointerleave',function(){self.leave();});
+    var h=this.host;
+    h.addEventListener('pointerdown',function(e){
+      self.ptrs[e.pointerId]={x:e.clientX,y:e.clientY};
+      var ids=Object.keys(self.ptrs),g0=self.geo;
+      if(g0){
+        var r0=h.getBoundingClientRect(),px0=e.clientX-r0.left,py0=e.clientY-r0.top;
+        if(px0>=g0.W-g0.mr&&py0>=g0.mt&&py0<=g0.mt+g0.Hm){try{h.setPointerCapture(e.pointerId);}catch(x){}self.drag={axis:true,y:e.clientY};return;}
+      }
+      if(self.tool==='cursor'){
+        try{h.setPointerCapture(e.pointerId);}catch(x){}
+        self.drag={x:e.clientX,y:e.clientY,moved:false,dist:ids.length===2?self.pdist():0};
+      }
+      self.move(e);
+    });
+    h.addEventListener('pointermove',function(e){
+      if(self.ptrs[e.pointerId]){self.ptrs[e.pointerId]={x:e.clientX,y:e.clientY};}
+      var ids=Object.keys(self.ptrs),g=self.geo;
+      if(self.drag&&self.drag.axis){
+        var dy0=e.clientY-self.drag.y;self.drag.y=e.clientY;
+        self.pz=clamp(self.pz*Math.exp(dy0/150),0.1,10);self.refreshTools();self.draw(true);return;
+      }
+      if(self.drag&&g&&self.tool==='cursor'){
+        if(ids.length>=2){
+          var d=self.pdist();
+          if(self.drag.dist>0&&d>0){var m=(self.ptrs[ids[0]].x+self.ptrs[ids[1]].x)/2,r=h.getBoundingClientRect();self.zoom(self.drag.dist/d,(m-r.left-g.ml)/g.iw);}
+          self.drag.dist=d;self.drag.moved=true;self.drag.x=null;
+        }else if(self.drag.x!=null&&ids.length===1){
+          var dx=e.clientX-self.drag.x,dy=e.clientY-self.drag.y;
+          if(self.drag.moved||Math.abs(dx)>4||Math.abs(dy)>4){self.drag.moved=true;self.pan(dx,dy);self.drag.x=e.clientX;self.drag.y=e.clientY;}
+        }
+      }
+      self.move(e);
+    });
+    var up=function(e){delete self.ptrs[e.pointerId];if(!Object.keys(self.ptrs).length)self.drag=null;else if(self.drag){self.drag.x=null;self.drag.dist=0;}};
+    h.addEventListener('pointerup',up);h.addEventListener('pointercancel',up);
+    h.addEventListener('pointerleave',function(e){up(e);self.leave();});
+    h.addEventListener('dblclick',function(e){
+      var g=self.geo;if(!g)return;var r=h.getBoundingClientRect();
+      if(e.clientX-r.left>=g.W-g.mr){self.pz=1;self.po=0;self.refreshTools();self.draw(true);}
+    });
+    h.addEventListener('wheel',function(e){
+      if(!self.geo)return;
+      var rr=h.getBoundingClientRect();
+      if(e.clientX-rr.left>=self.geo.W-self.geo.mr&&!e.ctrlKey&&!e.metaKey){e.preventDefault();self.pz=clamp(self.pz*(e.deltaY>0?1.12:1/1.12),0.1,10);self.refreshTools();self.draw(true);return;}
+      if(e.ctrlKey||e.metaKey){e.preventDefault();var r=h.getBoundingClientRect();self.zoom(e.deltaY>0?1.15:1/1.15,(e.clientX-r.left-self.geo.ml)/self.geo.iw);}
+      else if(Math.abs(e.deltaX)>Math.abs(e.deltaY)&&e.deltaX){e.preventDefault();self.pan(-e.deltaX);}
+    },{passive:false});
     if(window.ResizeObserver){this.ro=new ResizeObserver(function(){self.draw();});this.ro.observe(this.host);}
     this.draw(true);
   },
   destroy:function(){if(this.ro){this.ro.disconnect();this.ro=null;}this.host=null;this.geo=null;},
+  pdist:function(){var k=Object.keys(this.ptrs);if(k.length<2)return 0;var a=this.ptrs[k[0]],b=this.ptrs[k[1]];return Math.hypot(a.x-b.x,a.y-b.y);},
+  win:function(N0,cut0){
+    this.N0=N0;if(cut0!=null)this.cut0=cut0;var min=Math.min(10,N0),cnt=this.vc==null?N0:Math.max(min,Math.min(N0,Math.round(this.vc)));
+    var end=this.ve==null?N0:Math.max(cnt,Math.min(N0,Math.round(this.ve)));
+    return {from:this.cut0+end-cnt,to:this.cut0+end,cnt:cnt,end:end};
+  },
+  zoom:function(f,frac){
+    if(!this.N0)return;var w=this.win(this.N0),min=Math.min(10,this.N0),nc=Math.max(min,Math.min(this.N0,w.cnt*f));
+    frac=Math.max(0,Math.min(1,isFinite(frac)?frac:0.5));
+    var s0=w.end-w.cnt,anchor=s0+frac*w.cnt,ns=anchor-frac*nc,ne=ns+nc;
+    if(ne>this.N0){ne=this.N0;}if(ne<nc)ne=nc;
+    if(nc>=this.N0-0.5){this.vc=null;this.ve=null;}else{this.vc=nc;this.ve=ne;}
+    this.refreshTools();this.draw(true);
+  },
+  pan:function(dx,dy){
+    var g=this.geo;if(!g)return;
+    if(this.vc!=null&&dx){var w=this.win(this.N0),bars=dx/g.iw*w.cnt;this.ve=Math.max(w.cnt,Math.min(this.N0,w.end-bars));}
+    if(dy){this.po+=dy/g.Hm*this.pz;this.refreshTools();}
+    this.draw(true);
+  },
   cancel:function(){if(this.host){this.pend=null;this.meas=null;this.tool='cursor';this.refreshTools();this.draw(true);}},
   refreshTools:function(){var a=$('#apTools');if(a)a.innerHTML=this.toolbar();var d=$('#apDraws');if(d)d.innerHTML=this.drawList();var h=$('#apHint');if(h)h.textContent=this.hint();},
   refreshInds:function(){var c=$('#apChips');if(c)c.innerHTML=this.chips();var r=$('#indres');if(r&&!r.hidden)r.innerHTML=this.indRows($('#indq').value);this.draw(true);},
@@ -1972,6 +2047,9 @@ var AP={
     else if(k==='del'){this.drawings().splice(Number(t.dataset.i),1);Store.save();this.refreshTools();this.draw(true);}
     else if(k==='undo'){this.drawings().pop();Store.save();this.refreshTools();this.draw(true);}
     else if(k==='clear'){Store.state.draw[this.id]=[];Store.save();this.refreshTools();this.draw(true);}
+    else if(k==='zin'){this.zoom(1/1.4,1);}
+    else if(k==='zout'){this.zoom(1.4,1);}
+    else if(k==='zreset'){this.vc=null;this.ve=null;this.pz=1;this.po=0;this.refreshTools();this.draw(true);}
     else if(k==='indadd'){if(this.addInd(t.dataset.k)){Store.save();this.refreshInds();}}
     else if(k==='indrm'){C.ind=C.ind.filter(function(d){return String(d.id)!==t.dataset.iid;});Store.save();this.refreshInds();}
   },
@@ -2060,10 +2138,10 @@ var AP={
     var host=this.host;if(!host||!host.isConnected)return;
     if(!force&&host.dataset.hover==='1')return;
     var W=host.clientWidth;if(W<80)return;
-    var C=this.cfg(),id=this.id,a=BY[id],D=studioData(id,C.rng),X2=this.compute(D),cut=D.cut,t=D.t.slice(cut),v=D.v.slice(cut),n=v.length;
-    var candle=C.type==='candle'&&D.ohlc,co=candle?D.o.slice(cut):null,ch=candle?D.h.slice(cut):null,cl=candle?D.l.slice(cut):null;
+    var C=this.cfg(),id=this.id,a=BY[id],D=studioData(id,C.rng),X2=this.compute(D),W2=this.win(D.t.length-D.cut,D.cut),cut=W2.from,end=W2.to,t=D.t.slice(cut,end),v=D.v.slice(cut,end),n=v.length;
+    var candle=C.type==='candle'&&D.ohlc,co=candle?D.o.slice(cut,end):null,ch=candle?D.h.slice(cut,end):null,cl=candle?D.l.slice(cut,end):null;
     if(n<2){host.innerHTML='<p class="fine">'+X('Not enough data for this range.','Data tidak cukup untuk rentang ini.')+'</p>';this.geo=null;return;}
-    var vis=function(arr){return arr.slice(cut);};
+    var vis=function(arr){return arr.slice(cut,end);};
     var ov=X2.ov.map(function(o){return {lab:o.lab,c:o.c,lines:o.lines.map(function(l){return {a:vis(l.a),dash:l.dash,w:l.w};}),band:o.band?[vis(o.band[0]),vis(o.band[1])]:null,show:o.show.map(vis)};});
     var panes=X2.panes.map(function(P){return {lab:P.lab,lines:P.lines.map(function(l){return {a:vis(l.a),c:l.c};}),hist:P.hist?vis(P.hist):null,levels:P.levels,fix:P.fix,sym:P.sym,min0:P.min0,dec:P.dec,show:P.show.map(vis)};});
     var ml=4,mr=64,iw=W-ml-mr,Hm=W<560?300:380,SH=W<560?92:108,GAP=16,mt=8,y=mt+Hm,pyy=[];
@@ -2074,6 +2152,7 @@ var AP={
     ov.forEach(function(o){o.lines.forEach(function(l){l.a.forEach(eat);});});
     var logOn=!!C.log&&mn>0,f=logOn?Math.log:function(q){return q;},fi=logOn?Math.exp:function(q){return q;};
     var d0=f(mn),d1=f(mx),pv=(d1-d0||1)*0.06;d0-=pv;d1+=pv;
+    var span0=d1-d0,cm=(d0+d1)/2+this.po*span0;d0=cm-span0*this.pz/2;d1=cm+span0*this.pz/2;
     var Yf=function(q){return mt+(1-(f(q)-d0)/(d1-d0))*Hm;};
     var inv=function(yy){return fi(d0+(1-(yy-mt)/Hm)*(d1-d0));};
     var dec=a.dec,uidk='st'+(++uid);
@@ -2134,7 +2213,7 @@ var AP={
       var ty=clamp(ry-8,mt+14,mt+Hm-8);
       s+='<rect x="'+tx.toFixed(1)+'" y="'+(ty-13).toFixed(1)+'" width="'+tw.toFixed(1)+'" height="18" rx="3" fill="'+(up2?'var(--up)':'var(--down)')+'"/><text x="'+(tx+7).toFixed(1)+'" y="'+ty.toFixed(1)+'" style="fill:#fff;font:500 11px var(--font-data)">'+esc(mtxt)+'</text>';
     }
-    var ly=Yf(v[n-1]);s+='<line x1="'+ml+'" x2="'+(W-mr)+'" y1="'+ly.toFixed(1)+'" y2="'+ly.toFixed(1)+'" stroke="var(--ink-3)" stroke-width="1" stroke-dasharray="2 3"'+clip+'/>'+tag(ly,nf(v[n-1],dec),'#111318');
+    var ly=Yf(v[n-1]);s+='<line x1="'+ml+'" x2="'+(W-mr)+'" y1="'+ly.toFixed(1)+'" y2="'+ly.toFixed(1)+'" stroke="var(--ink-3)" stroke-width="1" stroke-dasharray="2 3"'+clip+'/>'+tag(clamp(ly,mt+9,mt+Hm-9),nf(v[n-1],dec),'#111318');
     s+='<rect x="'+ml+'" y="'+mt+'" width="'+iw+'" height="'+Hm+'" fill="none" class="pbox"/>';
     // lower panes
     panes.forEach(function(P,k){
@@ -2159,10 +2238,11 @@ var AP={
       P.lines.forEach(function(l){s+='<path d="'+pathOf(l.a,Xf,Yp)+'" fill="none" stroke="'+l.c+'" stroke-width="1.5"'+pc+'/>';});
       s+='<text id="pl'+k+'" class="stlbl" x="'+(ml+6)+'" y="'+(py+14)+'"></text>';
     });
-    for(var k=0;k<5;k++){var ii=Math.round(k*(n-1)/4);s+='<text class="al" x="'+Xf(ii).toFixed(1)+'" y="'+(H-8)+'" text-anchor="'+(k===0?'start':k===4?'end':'middle')+'">'+esc(fmtDate(t[ii]))+'</text>';}
+    var nl=Math.max(2,Math.min(5,Math.floor(iw/84)));
+    for(var k=0;k<nl;k++){var ii=Math.round(k*(n-1)/(nl-1));s+='<text class="al" x="'+Xf(ii).toFixed(1)+'" y="'+(H-8)+'" text-anchor="'+(k===0?'start':k===nl-1?'end':'middle')+'">'+esc(fmtDate(t[ii]))+'</text>';}
     s+='<g id="stxh" style="display:none;pointer-events:none"><line id="xhv" x1="0" x2="0" y1="'+mt+'" y2="'+bot+'" stroke="var(--ink-3)" stroke-width="1" stroke-dasharray="3 3"/><line id="xhh" x1="'+ml+'" x2="'+(W-mr)+'" y1="0" y2="0" stroke="var(--ink-3)" stroke-width="1" stroke-dasharray="3 3"/><rect id="xhpr" rx="3" fill="var(--ink)" style="display:none"/><text id="xhpt" style="fill:var(--bg);font:500 10.5px var(--font-data);display:none"></text><rect id="xhtr" rx="3" fill="var(--ink)"/><text id="xhtt" style="fill:var(--bg);font:500 10.5px var(--font-data)"></text></g>';
     s+='<line id="stpv" style="display:none;pointer-events:none" stroke="var(--accent)" stroke-width="1.4" stroke-dasharray="5 4"/><rect id="stpr" style="display:none;pointer-events:none" fill="var(--accent)" fill-opacity=".08" stroke="var(--accent)" stroke-width="1.2" stroke-dasharray="5 4"/>';
-    s+='<rect x="0" y="0" width="'+W+'" height="'+H+'" fill="transparent" style="cursor:'+(this.tool==='cursor'?'crosshair':'copy')+'"/></svg>';
+    s+='<rect x="0" y="0" width="'+W+'" height="'+H+'" fill="transparent" style="cursor:'+(this.tool==='cursor'?'crosshair':'copy')+'"/><rect x="'+(W-mr)+'" y="'+mt+'" width="'+mr+'" height="'+Hm+'" fill="transparent" style="cursor:ns-resize;touch-action:none"/></svg>';
     host.innerHTML=s;
     this.geo={o:co,hi:ch,lo:cl,id:id,W:W,H:H,ml:ml,mr:mr,iw:iw,mt:mt,Hm:Hm,n:n,t:t,v:v,X:Xf,Y:Yf,inv:inv,dec:dec,ov:ov,panes:panes,intraday:D.intraday};
     this.legend(n-1);
